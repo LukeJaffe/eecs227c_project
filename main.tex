@@ -1,0 +1,141 @@
+\documentclass[11pt]{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\newcommand{\numpy}{{\tt numpy}}    % tt font for numpy
+
+\topmargin -.5in
+\textheight 9in
+\oddsidemargin -.25in
+\evensidemargin -.25in
+\textwidth 7in
+
+\begin{document}
+
+% ========== Edit your name here
+\author{Luke Jaffe}
+\title{
+    EECS227C Project \\
+    \large Convergence Analysis for Gradient Methods on the Triplet Margin Loss
+    }
+\maketitle
+
+\medskip
+
+\section{Analysis of Original Problem}
+
+% ========== Begin answering questions here 
+The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature. Let $X, Y, Z \in \mathbb{R}^{n \times m}$ be a collection of data, with samples $x_i, y_i, z_i \in \mathbb{R}^m$ being rows from each matrix respectively, such that samples from $X$ and $Y$ have the same label, and samples from $Z$ have a different label. Let $f: \mathbb{R}^m \rightarrow \mathbb{R}^d$ be an \textit{embedding function} which projects samples into an \textit{embedding space}, $\mathbb{R}^d$. Let $\alpha \in \mathbb{R}^+$ be the margin parameter. Then the triplet margin loss can be stated as follows:
+
+\begin{equation}
+    \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(x_i) - f(y_i)\|_2^2 - \| f(x_i) - f(z_i)\|_2^2 + \alpha)
+\end{equation}
+
+Let $f$ be parameterized by some parameter set $\theta \in \Theta$, and restrict $\| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta$. Then we can use our objective for empirical risk minimization by solving the following optimization problem:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 + \alpha) \\
+    \textrm{s.t.} \quad &  \| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta
+\end{aligned}
+\end{equation}
+
+While this objective has seen widespread usage for learning image and word embeddings, there has been no corresponding convergence analysis to date, even for a simple case. The goal of this work is to present a convergence analysis for an affine choice of $f$: $f(A, b; x) = Ax + b$, $A \in \mathbb{R}^{d \times m}, b \in \mathbb{R}^d$. To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
+
+Then we can simplify the optimization problem as follows:
+
+\begin{flalign*}
+& \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 & \\
+& = \| f(\theta; x_i) \|_2^2 + \| f(\theta; y_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) \rangle - \| f(\theta; x_i) \|_2^2 + \| f(\theta; z_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; z_i) \rangle \\
+& = \| f(\theta; y_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) - f(\theta; z_i) \rangle \\
+& = 2\langle f(\theta; x_i), f(\theta; y_i) - f(\theta; z_i) \rangle \quad\text{(using $\| f(\theta)\|_2 = 1$)} \\
+\end{flalign*}
+
+Now substituting affine choice of $f$:
+
+\begin{flalign*}
+& = 2\langle f(\tilde{A}; \tilde{x_i}), f(\tilde{A}; \tilde{y_i}) - f(\tilde{A}; \tilde{z_i}) \rangle & \\
+& = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i})
+\end{flalign*}
+
+And our optimization problem can be written as:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha) \\
+    \textrm{s.t.} \quad &  \| f(\tilde{A})\|_2 = 1
+\end{aligned}
+\end{equation}
+
+We note that this problem is convex, but not smooth.
+
+Actually, I am not sure if the problem can be written that way, since the constraint $\| f(\theta)\|_2 = 1$ is obtained in practice by dividing $f$ by its norm: $\| g(\theta)\|_2 = \frac{f(\theta)}{\| f(\theta)\|_2} \rightarrow \| g(\theta)\|_2 = 1$. In this case, the problem would look like:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max\left(0, 2\left\langle \frac{\tilde{A} \tilde{x_i}}{\| \tilde{A} \tilde{x_i} \|_2}, \frac{\tilde{A} \tilde{y_i}}{\| \tilde{A} \tilde{y_i} \|_2} - \frac{\tilde{A} \tilde{z_i}}{\| \tilde{A} \tilde{z_i} \|_2} \right\rangle + \alpha\right)
+\end{aligned}
+\end{equation}
+
+I am not sure if this can be reformulated as a convex problem.
+
+\section{Analysis of Relaxed Problem}
+
+To alleviate issues with the previous formulation, including non-smoothness of the max function, and the norm constraint, we can relax the problem to be easier to analyze, while retaining its high-level properties. Specifically, we will swap the max function for the softplus function, and remove the norm constraint altogether.
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \log{(1 + \exp{( \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 + \alpha)})}
+\end{aligned}
+\end{equation}
+
+With affine choice of f:
+
+\begin{equation}
+\label{eq:smooth_problem}
+\begin{aligned}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \log{(1 + \exp{( 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha)})}
+\end{aligned}
+\end{equation}
+
+To check convexity of this function, we only need to study the inner portion:
+
+\begin{equation}
+\begin{aligned}
+g(\tilde{A}) = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha
+\end{aligned}
+\end{equation}
+
+We can check if the Hessian of this expression is PSD:
+
+\begin{align*}
+\nabla{g(\tilde{A})} 
+&= \tilde{A}((\tilde{y_i} - 2\tilde{x_i})\tilde{y_i}^\top + \tilde{y_i}(\tilde{y_i} - 2\tilde{x_i})^\top) - \tilde{A}((\tilde{z_i} - 2\tilde{x_i})\tilde{z_i}^\top + \tilde{z_i}(\tilde{z_i} - 2\tilde{x_i})^\top) \\
+&= \tilde{A}(2\tilde{y_i}\tilde{y_i}^\top - 2\tilde{x_i}\tilde{y_i}^\top - 2\tilde{y_i}\tilde{x_i}^\top- 2\tilde{z_i}\tilde{z_i}^\top + 2\tilde{x_i}\tilde{z_i}^\top + 2\tilde{z_i}\tilde{x_i}^\top) \\
+&= 2\tilde{A}(\tilde{y_i}\tilde{y_i}^\top - \tilde{z_i}\tilde{z_i}^\top - \tilde{x_i}(\tilde{y_i} - \tilde{z_i})^\top - (\tilde{y_i} - \tilde{z_i})\tilde{x_i}^\top) \\
+\end{align*}
+
+\begin{equation}
+\begin{aligned}
+\nabla^2 g(\tilde{A})
+&= 2(\tilde{y_i}\tilde{y_i}^\top - \tilde{z_i}\tilde{z_i}^\top - \tilde{x_i}(\tilde{y_i} - \tilde{z_i})^\top - (\tilde{y_i} - \tilde{z_i})\tilde{x_i}^\top)
+\end{aligned}
+\end{equation}
+
+Since the Hessian is entirely data dependent, that complicates our analysis. It is clear that we must impose some additional normalization of the data to ensure the Hessian is PSD, but it's not clear what that should be.
+
+If if it is possible to ensure that the problem in (\ref{eq:smooth_problem}) is convex and smooth, we can analyze it using the standard techniques, and hopefully find a bound which is better than the generic bound.
+
+\section{Potential Next Steps for the Project}
+
+\begin{itemize}
+  \item Trying different gradient methods
+  \item Analyzing stochastic gradient method for the problem
+  \item Attempting to analyze the original problem with the max function
+  \item Empirical analysis using toy separable data with two classes
+\end{itemize}
+
+\end{document}
+\grid
+\grid
