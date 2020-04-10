@@ -2,6 +2,8 @@
 
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage[sorting=none]{biblatex}
+\addbibresource{references.bib}
 
 \newcommand{\numpy}{{\tt numpy}}    % tt font for numpy
 
@@ -26,7 +28,7 @@
 \section{Analysis of Original Problem}
 
 % ========== Begin answering questions here 
-The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature. Let $X, Y, Z \in \mathbb{R}^{n \times m}$ be a collection of data, with samples $x_i, y_i, z_i \in \mathbb{R}^m$ being rows from each matrix respectively, such that samples from $X$ and $Y$ have the same label, and samples from $Z$ have a different label. Let $f: \mathbb{R}^m \rightarrow \mathbb{R}^d$ be an \textit{embedding function} which projects samples into an \textit{embedding space}, $\mathbb{R}^d$. Let $\alpha \in \mathbb{R}^+$ be the margin parameter. Then the triplet margin loss can be stated as follows:
+The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature \cite{schroff_facenet_2015, hermans_defense_2017}. Let $X, Y, Z \in \mathbb{R}^{n \times m}$ be a collection of data, with samples $x_i, y_i, z_i \in \mathbb{R}^m$ being rows from each matrix respectively, such that samples from $X$ and $Y$ have the same label, and samples from $Z$ have a different label. Let $f: \mathbb{R}^m \rightarrow \mathbb{R}^d$ be an \textit{embedding function} which projects samples into an \textit{embedding space}, $\mathbb{R}^d$. Let $\alpha \in \mathbb{R}^+$ be the margin parameter. Then the triplet margin loss can be stated as follows:
 
 \begin{equation}
     \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(x_i) - f(y_i)\|_2^2 - \| f(x_i) - f(z_i)\|_2^2 + \alpha)
@@ -70,7 +72,9 @@ And our optimization problem can be written as:
 
 We note that this problem is convex, but not smooth.
 
-Actually, I am not sure if the problem can be written that way, since the constraint $\| f(\theta)\|_2 = 1$ is obtained in practice by dividing $f$ by its norm: $\| g(\theta)\|_2 = \frac{f(\theta)}{\| f(\theta)\|_2} \rightarrow \| g(\theta)\|_2 = 1$. In this case, the problem would look like:
+\bigskip
+
+***\textbf{Note}: Actually, I am not sure if the problem can be written that way, since the constraint $\| f(\theta)\|_2 = 1$ is obtained in practice by dividing $f$ by its norm: $\| g(\theta)\|_2 = \frac{f(\theta)}{\| f(\theta)\|_2} \rightarrow \| g(\theta)\|_2 = 1$. In this case, the problem would look like:
 
 \begin{equation}
 \begin{aligned}
@@ -107,7 +111,7 @@ g(\tilde{A}) = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i
 \end{aligned}
 \end{equation}
 
-We can check if the Hessian of this expression is PSD:
+We can check if the Hessian of this function is PSD:
 
 \begin{align*}
 \nabla{g(\tilde{A})} 
@@ -134,7 +138,10 @@ If if it is possible to ensure that the problem in (\ref{eq:smooth_problem}) is 
   \item Analyzing stochastic gradient method for the problem
   \item Attempting to analyze the original problem with the max function
   \item Empirical analysis using toy separable data with two classes
+  \item Compare empirical behavior of gradient methods for the relaxed problem vs. the original problem
 \end{itemize}
+
+\printbibliography
 
 \end{document}
 \grid
