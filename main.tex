@@ -49,15 +49,15 @@ Then we can simplify the optimization problem as follows:
 
 \begin{flalign*}
 & \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 & \\
-& = \| f(\theta; x_i) \|_2^2 + \| f(\theta; y_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) \rangle - \| f(\theta; x_i) \|_2^2 + \| f(\theta; z_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; z_i) \rangle \\
-& = \| f(\theta; y_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) - f(\theta; z_i) \rangle \\
-& = 2\langle f(\theta; x_i), f(\theta; y_i) - f(\theta; z_i) \rangle \quad\text{(using $\| f(\theta)\|_2 = 1$)} \\
+& = \| f(\theta; x_i) \|_2^2 + \| f(\theta; y_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) \rangle - \| f(\theta; x_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) \rangle \\
+& = \| f(\theta; y_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \\
+& = 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \quad\text{(using $\| f(\theta)\|_2 = 1$)} \\
 \end{flalign*}
 
 Now substituting affine choice of $f$:
 
 \begin{flalign*}
-& = 2\langle f(\tilde{A}; \tilde{x_i}), f(\tilde{A}; \tilde{y_i}) - f(\tilde{A}; \tilde{z_i}) \rangle & \\
+& = 2\langle f(\tilde{A}; \tilde{x_i}), f(\tilde{A}; \tilde{z_i}) - f(\tilde{A}; \tilde{y_i}) \rangle & \\
 & = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i})
 \end{flalign*}
 
@@ -78,7 +78,7 @@ We note that this problem is convex, but not smooth.
 
 \begin{equation}
 \begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max\left(0, 2\left\langle \frac{\tilde{A} \tilde{x_i}}{\| \tilde{A} \tilde{x_i} \|_2}, \frac{\tilde{A} \tilde{y_i}}{\| \tilde{A} \tilde{y_i} \|_2} - \frac{\tilde{A} \tilde{z_i}}{\| \tilde{A} \tilde{z_i} \|_2} \right\rangle + \alpha\right)
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max\left(0, 2\left\langle \frac{\tilde{A} \tilde{x_i}}{\| \tilde{A} \tilde{x_i} \|_2}, \frac{\tilde{A} \tilde{z_i}}{\| \tilde{A} \tilde{z_i} \|_2} - \frac{\tilde{A} \tilde{y_i}}{\| \tilde{A} \tilde{y_i} \|_2} \right\rangle + \alpha\right)
 \end{aligned}
 \end{equation}
 
@@ -99,7 +99,7 @@ With affine choice of f:
 \begin{equation}
 \label{eq:smooth_problem}
 \begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \log{(1 + \exp{( 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha)})}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \log{(1 + \exp{(\tilde{z_i}^\top\tilde{A}^\top\tilde{A}\tilde{z_i} - \tilde{y_i}^\top\tilde{A}^\top\tilde{A}\tilde{y_i} + 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha)})}
 \end{aligned}
 \end{equation}
 
@@ -107,29 +107,69 @@ To check convexity of this function, we only need to study the inner portion:
 
 \begin{equation}
 \begin{aligned}
-g(\tilde{A}) = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha
+g(\tilde{A}) = \tilde{z_i}^\top\tilde{A}^\top\tilde{A}\tilde{z_i} - \tilde{y_i}^\top\tilde{A}^\top\tilde{A}\tilde{y_i} + 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha
 \end{aligned}
 \end{equation}
 
 We can check if the Hessian of this function is PSD:
 
 \begin{align*}
-\nabla{g(\tilde{A})} 
-&= \tilde{A}((\tilde{y_i} - 2\tilde{x_i})\tilde{y_i}^\top + \tilde{y_i}(\tilde{y_i} - 2\tilde{x_i})^\top) - \tilde{A}((\tilde{z_i} - 2\tilde{x_i})\tilde{z_i}^\top + \tilde{z_i}(\tilde{z_i} - 2\tilde{x_i})^\top) \\
-&= \tilde{A}(2\tilde{y_i}\tilde{y_i}^\top - 2\tilde{x_i}\tilde{y_i}^\top - 2\tilde{y_i}\tilde{x_i}^\top- 2\tilde{z_i}\tilde{z_i}^\top + 2\tilde{x_i}\tilde{z_i}^\top + 2\tilde{z_i}\tilde{x_i}^\top) \\
-&= 2\tilde{A}(\tilde{y_i}\tilde{y_i}^\top - \tilde{z_i}\tilde{z_i}^\top - \tilde{x_i}(\tilde{y_i} - \tilde{z_i})^\top - (\tilde{y_i} - \tilde{z_i})\tilde{x_i}^\top) \\
+\nabla{g(\tilde{A})}
+&= 2\tilde{A}\tilde{z_i}\tilde{z_i}^\top - 2\tilde{A}\tilde{y_i}\tilde{y_i}^\top + 2\tilde{A}(\tilde{x_i}(\tilde{z_i} - \tilde{y_i})^\top + (\tilde{z_i} - \tilde{y_i})\tilde{x_i}^\top) \\
+&= 2\tilde{A}(\tilde{z_i}\tilde{z_i}^\top - \tilde{y_i}\tilde{y_i}^\top + \tilde{x_i}(\tilde{z_i} - \tilde{y_i})^\top + (\tilde{z_i} - \tilde{y_i})\tilde{x_i}^\top)
 \end{align*}
 
 \begin{equation}
 \begin{aligned}
 \nabla^2 g(\tilde{A})
-&= 2(\tilde{y_i}\tilde{y_i}^\top - \tilde{z_i}\tilde{z_i}^\top - \tilde{x_i}(\tilde{y_i} - \tilde{z_i})^\top - (\tilde{y_i} - \tilde{z_i})\tilde{x_i}^\top)
+&= \textrm{4d tensor}
 \end{aligned}
 \end{equation}
 
-Since the Hessian is entirely data dependent, that complicates our analysis. It is clear that we must impose some additional normalization of the data to ensure the Hessian is PSD, but it's not clear what that should be.
+The Hessian is a 4d tensor, which complicates our analysis, so we will look at the case where $\tilde{A}$ is a vector as well. 
 
-If if it is possible to ensure that the problem in (\ref{eq:smooth_problem}) is convex and smooth, we can analyze it using the standard techniques, and hopefully find a bound which is better than the generic bound.
+Let $f(w; x) = w^{\top}x$. Then we have:
+\begin{equation}
+\begin{aligned}
+g(w) = (w^{\top}z)^2 - (w^{\top}y)^2 + 2(w^{\top}x)(w^{\top}(z - y))
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+\nabla g(w) = 2(zz^{\top} - yy^{\top} + x(z - y)^{\top} + (z - y)x^{\top})w
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+\nabla^2 g(w) = 2(zz^{\top} - yy^{\top} + x(z - y)^{\top} + (z - y)x^{\top})
+\end{aligned}
+\end{equation}
+
+It is clear that we must impose some additional normalization of the data to ensure the Hessian is PSD, but it's not clear what that should be. One possibility is to use the eigenvalues of the data-dependent term as follows. Let $Q = \nabla^2 g(w) = 2(zz^{\top} - yy^{\top} + x(z - y)^{\top} + (z - y)x^{\top})$. 
+
+\begin{equation}
+\begin{aligned}
+\nabla^2 \tilde{g}(w) = Q - diag(\lambda_{min}(Q))
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+\nabla \tilde{g}(w) = (Q - diag(\lambda_{min}(Q)))w
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+\tilde{g}(w) = \frac{1}{2}w^{\top}(Q - diag(\lambda_{min}(Q)))w
+\end{aligned}
+\end{equation}
+
+I'm not sure if this is somehow trivial in another way.
+
+If it is possible to ensure that the problem in (\ref{eq:smooth_problem}) is convex and smooth, we can analyze it using the standard techniques, and hopefully find a bound which is better than the generic bound.
 
 \section{Potential Next Steps for the Project}
 
