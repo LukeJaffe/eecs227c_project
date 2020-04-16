@@ -205,7 +205,7 @@ Finally, we can split up the sum to show the full DC formulation:
 \end{aligned}
 \end{equation}
 
-Although this is DC for affine choice of $f(\theta)$, the function is not smooth due to the max function. To produce a smooth, convex approximation to the max function, we can use the LogSumExp function:
+Although this is DC for affine choice of $f(\theta)$, $h_i(\theta)$ is not smooth due to the max function. To produce a smooth, convex approximation to the max function, we can use the LogSumExp function:
 
 \begin{equation}
 \begin{aligned}
@@ -221,14 +221,17 @@ Using this function, our final smoothed DC problem is:
 \end{aligned}
 \end{equation}
 
+\subsection{Analysis}
+
 \section{Potential Next Steps for the Project}
 
 \begin{itemize}
   \item Trying different gradient methods
   \item Analyzing stochastic gradient method for the problem
-  \item Attempting to analyze the original problem with the max function
+  \item Attempting to analyze the original problem with the non-smoothed problem
   \item Empirical analysis using toy separable data with two classes
   \item Compare empirical behavior of gradient methods for the relaxed problem vs. the original problem
+  \item Compare nearest neighbors performance for difference constraints on the weight space, C
 \end{itemize}
 
 \printbibliography
