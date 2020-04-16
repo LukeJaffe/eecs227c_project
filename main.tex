@@ -171,6 +171,56 @@ However, it is clear that this is trivial because the original problem is unboun
 
 If it is possible to ensure that the problem in (\ref{eq:smooth_problem}) is convex and smooth, we can analyze it using the standard techniques, and hopefully find a bound which is better than the generic bound.
 
+\section{DC Reformulation with Smoothing}
+
+Let us return to the original max formulation to show that it is DC if we use L2-norm instead of L2-norm-squared. We also remove the norm constraint.
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(\theta; x_i) - f(\theta; y_i)\|_2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2 + \alpha)
+\end{aligned}
+\end{equation}
+
+Let $g_i(\theta) = \| f(\theta; x_i) - f(\theta; y_i)\|_2 + \alpha, \quad h_i(\theta) = f(\theta; x_i) - f(\theta; z_i)\|_2$. Note that $g_i(\theta)$ and $h_i(\theta)$ are convex if $f(\theta)$ is affine. We can rewrite the objective as:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, g_i(\theta) - h_i(\theta))
+\end{aligned}
+\end{equation}
+
+Split up the max function:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(g_i(\theta), h_i(\theta)) - h_i(\theta)
+\end{aligned}
+\end{equation}
+
+Finally, we can split up the sum to show the full DC formulation:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(g_i(\theta), h_i(\theta)) - \frac{1}{n} \sum_{i=1}^{n} h_i(\theta)
+\end{aligned}
+\end{equation}
+
+Although this is DC for affine choice of $f(\theta)$, the function is not smooth due to the max function. To produce a smooth, convex approximation to the max function, we can use the LogSumExp function:
+
+\begin{equation}
+\begin{aligned}
+\textrm{LSE}(x_1, ..., x_n) = \log\sum_{i=1}^{n} \exp(x_i)
+\end{aligned}
+\end{equation}
+
+Using this function, our final smoothed DC problem is:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \textrm{LSE}(g_i(\theta), h_i(\theta)) - \frac{1}{n} \sum_{i=1}^{n} h_i(\theta)
+\end{aligned}
+\end{equation}
+
 \section{Potential Next Steps for the Project}
 
 \begin{itemize}
