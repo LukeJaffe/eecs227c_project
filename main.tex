@@ -19,11 +19,195 @@
 \author{Luke Jaffe}
 \title{
     EECS227C Project \\
-    \large Convergence Analysis for Gradient Methods on the Triplet Margin Loss
+    \large Convergence Analysis for Gradient Methods on Metric Learning Objectives
     }
 \maketitle
 
 \medskip
+
+\section{Introduction}
+
+In this work we study:
+\begin{itemize}
+    \item Two metric learning objectives
+    \item Relaxation and reformulation of these objectives as DC functions
+    \item Smoothability of these objectives, and study of accuracy/smoothness tradeoff
+    \item Dependence on data of conditioning of the problem
+    \item Study of smoothness parameters vs. minima for original and smooth relaxation
+    \item Interpretations of these objectives as learning a separating hyperplane with soft margin
+    \item Extension of the objectives to learning an affine mapping instead of weight vector
+    \item Different gradient methods for minimization of these objectives
+    \item Possible extensions to the empirical risk minimization setting
+\end{itemize}
+
+
+Other stuff:
+\begin{itemize}
+    \item Different learning rate selection including exact line search, backtracking line search
+    \item Nesterov momentum for speedup (for badly conditioned problems?)
+\end{itemize}
+
+\section{Initial writeup for simplified problem}
+
+\subsection{DC Reformulation}
+
+\subsection{Analysis of Full Function Minima}
+
+ 
+
+\subsection{Smoothness Analysis of $g(w)$}
+
+\begin{equation}
+    g(w) = \log( \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) )
+\end{equation}
+
+\begin{equation}
+    \nabla g(w) 
+    = \frac{ 2 \{ \exp((w^{\top}u)^2)uu^{\top} + \exp((w^{\top}v)^2)vv^{\top}  \} w}{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) }
+\end{equation}
+
+To find the Hessian, we break the gradient into two parts for use of the chain rule:
+
+\begin{align*}
+    \nabla (\nabla g(w) \; \textrm{top}) 
+    &= 4 \{ \exp((w^{\top}u)^2)uu^{\top}ww^{\top}uu^{\top} + \exp((w^{\top}v)^2)vv^{\top}ww^{\top}vv^{\top} \} \\
+    &= 4 \{ \exp((w^{\top}u)^2)(w^{\top}u)^2 uu^{\top} + \exp((w^{\top}v)^2)(w^{\top}v)^2 vv^{\top} \}
+\end{align*}
+
+\begin{align*}
+    \nabla (\nabla g(w) \; \textrm{bot}) = \frac{ -2 \{ \exp((w^{\top}u)^2)uu^{\top} + \exp((w^{\top}v)^2)vv^{\top} \} w }{ \{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) \}^2 }
+\end{align*}
+
+Combining the parts:
+
+\begin{align*}
+    \nabla^2 g(w) &= 
+    \frac{ 4 \{ \exp((w^{\top}u)^2)(w^{\top}u)^2 uu^{\top} + \exp((w^{\top}v)^2)(w^{\top}v)^2 vv^{\top} \} }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  } \\
+    &- \frac{ 4 \{ \exp((w^{\top}u)^2)uu^{\top} + \exp((w^{\top}v)^2)vv^{\top}  \} ww^{\top} \{ \exp((w^{\top}u)^2)uu^{\top} + \exp((w^{\top}v)^2)vv^{\top}  \} }{ \{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) \}^2 }
+\end{align*}
+
+Re-arranging, we have:
+
+\begin{align*}
+    \nabla^2 g(w) &= 
+    4 \left\{ \frac{  \exp((w^{\top}u)^2)(w^{\top}u)^2 uu^{\top}  }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  } +
+    \frac{  \exp((w^{\top}v)^2)(w^{\top}v)^2 vv^{\top}  }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  } \right\} \\
+    &- 4 \left\{
+    \frac{  \exp((w^{\top}u)^2) uu^{\top}  }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  } + \frac{  \exp((w^{\top}v)^2) vv^{\top}  }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  } \right\}
+    ww^{\top} \\
+     & \left\{ \frac{  \exp((w^{\top}u)^2) uu^{\top}  }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  } + \frac{  \exp((w^{\top}v)^2) vv^{\top}  }{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2)  }
+     \right\}
+\end{align*}
+
+We can simplify further by using the substitution: 
+\begin{align*}
+p = \frac{\exp((w^{\top}u)^2)}{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) }
+\end{align*}
+
+Note that $0 < p < 1$, and:
+\begin{align*}
+1 - p = \frac{\exp((w^{\top}v)^2)}{ \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) }
+\end{align*}
+
+Plugging in to the Hessian expression:
+
+\begin{align*}
+    \nabla^2 g(w) &= 
+    4 \{ p(w^{\top}u)^2 uu^{\top} + (1-p)(w^{\top}v)^2 vv^{\top} \} \\
+    &- 4 \{ p uu^{\top} + (1-p) vv^{\top} \}ww^{\top}\{ p uu^{\top} + (1-p) vv^{\top} \} \\
+    &= 4 p(w^{\top}u)^2 uu^{\top} + 4 (1-p)(w^{\top}v)^2 vv^{\top} \\
+    &- 4 p^2 (w^{\top}u)^2 uu^{\top} - 4 (1-p)^2 (w^{\top}v)^2 vv^{\top} \\
+    &- 8 p (1-p) (w^{\top}u)(w^{\top}v)(uv^{\top} + vu^{\top}) \\
+    &= 4 p (1 - p) (w^{\top}u)^2 uu^{\top} + 4 p (1-p) (w^{\top}v)^2 vv^{\top} \\
+    &- 8 p (1-p) (w^{\top}u)(w^{\top}v)(uv^{\top} + vu^{\top})
+\end{align*}
+
+Using $0 < p(1-p) \leq \frac{1}{4}$, we have, $\forall z \in \mathbb{R}^d$:
+
+\begin{align*}
+    z^{\top} \nabla^2 g(w) z &\leq
+    z^{\top} \left\{ (w^{\top}u)^2 uu^{\top} + (w^{\top}v)^2 vv^{\top} - 2 (w^{\top}u)(w^{\top}v)(uv^{\top} + vu^{\top}) \right\} z \\
+    &\leq \|z\|_2^2 \left\{ (w^{\top}u)^2 \|u\|_2^2 + (w^{\top}v)^2 \|v\|_2^2 + 4 \left| (w^{\top}u)(w^{\top}v)(u^{\top}v) \right| \right\} \\
+    &\leq \|z\|_2^2 \|w\|_2^2 \left\{ \|u\|_2^4 + \|v\|_2^4 + 4 \|u\|_2^2 \|v\|_2^2 \right\}
+\end{align*}
+
+This gives us:
+
+\begin{equation}
+    \nabla^2 g(w) \preceq \|w\|_2^2 \left\{ \|u\|_2^4 + \|v\|_2^4 + 4 \|u\|_2^2 \|v\|_2^2 \right\} I_d
+\end{equation}
+
+Meaning that $g(w)$ is $M_g$-smooth, with $M_g = \|w\|_2^2 \left\{ \|u\|_2^4 + \|v\|_2^4 + 4 \|u\|_2^2 \|v\|_2^2 \right\}$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Smoothness Analysis of Full Function}
+
+In this section, we analyze a simplified version of the target function, with $\mu = 1$ and $\alpha = 0$. We simplify notation by letting $u = x - y$ and $v = x - z$.
+
+\begin{equation}
+    f(w) = \log(\exp((w^{\top}u)^2 - (w^{\top}v)^2) + 1)
+\end{equation}
+
+We can simplify further by letting $B = uu^\top - vv^\top$:
+
+\begin{equation}
+    f(w) = \log(\exp(w^{\top}Bw) + 1)
+\end{equation}
+
+\begin{equation}
+    \nabla f(w) = \frac{2 \exp(w^{\top}Bw)Bw}{\exp(w^{\top}Bw) + 1}
+\end{equation}
+
+To find the Hessian, we break the gradient into two parts for use of the chain rule:
+
+\begin{align*}
+    \nabla (\nabla f(w) \; \textrm{top}) = 4 \exp(w^{\top}Bw)Bww^{\top}B  + 2 \exp(w^{\top}Bw)B
+\end{align*}
+
+\begin{align*}
+    \nabla (\nabla f(w) \; \textrm{bot}) = \frac{-2 \exp(w^{\top}Bw)B}{\exp(w^{\top}Bw) + 1}
+\end{align*}
+
+Combining the parts:
+
+\begin{align*}
+    \nabla^2 f(w) = \frac{4 \exp(w^{\top}Bw)B(ww^{\top}B + \frac{1}{2}I_d)}{\exp(w^{\top}Bw) + 1} - \frac{4 \{\exp(w^{\top}Bw)\}^2 Bww^{\top}B }{\{\exp(w^{\top}Bw) + 1\}^2}
+\end{align*}
+
+We can simplify further by using the substitution: 
+\begin{align*}
+q = \frac{\exp(w^{\top}Bw)}{\exp(w^{\top}Bw) + 1}
+\end{align*}
+
+Using this substitution, we have:
+\begin{equation}
+    \nabla^2 f(w) = 4q(1-q)Bww^{\top}B + 2qB
+\end{equation}
+
+Noting that $0 < q < 1$ and $0 < q^2 \leq \frac{1}{4}$ we have, $\forall z \in \mathbb{R}^d$:
+
+\begin{align*}
+z^{\top} \nabla^2 f(w) z 
+&= 4q(1-q) z^{\top} Bww^{\top}B z + 2q z^{\top} B z \\
+&< z^{\top} Bww^{\top}B z + 2 z^{\top} B z \\
+&\leq \|z\|_2^2 \|w\|_2^2 \|B\|_2^2 + 2 \|z\|_2^2 \|B\|_2 \\
+&= \|z\|_2^2 ( \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2 ) 
+\end{align*}
+
+This gives us:
+
+\begin{equation}
+    \nabla^2 f(w) \prec ( \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2 ) I_d
+\end{equation}
+
+Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2$.
+
+
+\subsection{Gradient Descent Analysis of Full Function}
+
+\subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
+
+\subsection{Extension to case with $m > 1$}
 
 \section{Analysis of Original Problem}
 
@@ -205,7 +389,7 @@ Finally, we can split up the sum to show the full DC formulation:
 \end{aligned}
 \end{equation}
 
-Although this is DC for affine choice of $f(\theta)$, $h_i(\theta)$ is not smooth due to the max function. To produce a smooth, convex approximation to the max function, we can use the LogSumExp function:
+Although this is DC for affine choice of $f(\theta)$, $h_i(\theta)$ is not smooth due to the max function and the L2-norm. To produce a smooth, convex approximation to the max function, we can use the LogSumExp function:
 
 \begin{equation}
 \begin{aligned}
@@ -213,12 +397,39 @@ Although this is DC for affine choice of $f(\theta)$, $h_i(\theta)$ is not smoot
 \end{aligned}
 \end{equation}
 
-Using this function, our final smoothed DC problem is:
+To produce a smooth approximation to the L2-norm, we can use the following:
+
+\begin{equation}
+\label{eq:smooth_2norm}
+\begin{aligned}
+\| x \|_\beta = \sqrt{\| x \|_2^2 + \beta^2} - \beta, \quad \beta > 0, x \in \mathbb{R}^d
+\end{aligned}
+\end{equation}
+
+Note that Eq. (\ref{eq:smooth_2norm}) is $\frac{1}{\beta}$-smooth.
+
+Using these functions, our final smoothed DC problem is:
 
 \begin{equation}
 \label{eq:smooth_dc}
 \begin{aligned}
     \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \textrm{LSE}(g_i(\theta), h_i(\theta)) - \frac{1}{n} \sum_{i=1}^{n} h_i(\theta)
+\end{aligned}
+\end{equation}
+
+The affine version is:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \log\left\{ \exp \left(\| \tilde{A}(\tilde{x}_i - \tilde{y}_i) \|_\beta + \alpha \right) + \exp \left(\| \tilde{A}(\tilde{x}_i - \tilde{z}_i) \|_\beta \right)  \right \} - \frac{1}{n} \sum_{i=1}^{n} \| \tilde{A}(\tilde{x}_i - \tilde{z}_i) \|_\beta
+\end{aligned}
+\end{equation}
+
+To start, we examine a simpler case where $\tilde{A} = w \in \mathbb{R}^d$ and $n = 1$:
+
+\begin{equation}
+\begin{aligned}
+    \min_{w} \quad & \log\left\{ \exp \left(\| w^{\top}(x - y) \|_\beta + \alpha \right) + \exp \left(\| w^{\top}(x - z) \|_\beta \right)  \right \} - \| w^{\top}(x - z) \|_\beta
 \end{aligned}
 \end{equation}
 
@@ -228,14 +439,21 @@ We analyze this formulation using the methodology from \cite{khamaru_convergence
 
 Since $h_i(\theta)$ is differentiable for our case, we can use a regular gradient step and achieve the convergence bound for Algorithm 1 in \cite{khamaru_convergence_nodate}. Not sure if it is necessary to constrict $\theta \in \mathcal{C}$ as in \cite{khamaru_convergence_nodate}, but this can be done if necessary.
 
+\subsubsection{Does this formulation have a trivial solution? Or a closed form solution?}
+
+$A = w = 0$ does not minimize this function because of the margin parameter $\alpha$. As for finding a closed form solution, we can see if it is clear from computing the gradient.
+
 \subsubsection{Find smoothness $M_g$ and smoothness $M_h$}
 
 \subsubsection{Attempt improvement of convergence bound in \cite{khamaru_convergence_nodate} using the specific properties of our function}
+
+\subsubsection{Does this smooth version allow for triplets which violate the original objective? If so, can this violation be quantified?}
 
 \section{Potential Next Steps for the Project}
 
 \begin{itemize}
   \item Trying different gradient methods
+  \item Use Nesterov momentum as in the Princeton slides
   \item Analyzing stochastic gradient method for the problem
   \item Attempting to analyze the non-smoothed problem
   \item Empirical analysis using toy separable data with two classes
