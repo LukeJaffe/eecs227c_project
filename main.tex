@@ -27,13 +27,74 @@
 
 \title{
     EECS227C Project \\
-    \large Convergence Analysis for Gradient Methods on Metric Learning Objectives
+    \large Convergence Analysis for Gradient Descent on the Triplet Margin Loss
     }
 \maketitle
 
 \medskip
 
 \section{Introduction}
+
+% ========== Begin answering questions here 
+The \textit{triplet margin loss} function is a common \textit{metric learning} objective function, which has been demonstrated as empirically effective in the deep learning literature \cite{schroff_facenet_2015, hermans_defense_2017}. Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $f: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$ on $X$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was commonly studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification. 
+
+More recently, metric learning has been combined with deep learning into a highly accurate vehicle for three computer vision problems: verification, re-identification, and retrieval. In the image verification problem, the goal is to tell whether two images belong to the same instance. This is commonly used for authentication of identity, either for unlocking a smartphone (cite apple), or more recently for airport security (cite wsj). In the image re-identification problem, the goal is to search a database for a single matching image to a query image. This is commonly used for re-identification of people / faces (cite facenet), and vehicles (cite vehicle id). In the image retrieval problem, the goal is to return all similar or matching images to a query image. This is used in reverse image search applications, as in (cite google, tineye).
+
+Let $X, Y, Z \in \mathbb{R}^{n \times m}$ be a collection of data, with samples $x_i, y_i, z_i \in \mathbb{R}^m$ being rows from each matrix respectively, such that samples from $X$ and $Y$ have the same label, and samples from $Z$ have a different label. Let $f: \mathbb{R}^m \rightarrow \mathbb{R}^d$ be an \textit{embedding function} which projects samples into an \textit{embedding space}, $\mathbb{R}^d$. Let $\alpha \in \mathbb{R}^+$ be the margin parameter. Then the triplet margin loss can be stated as follows:
+
+\begin{equation}
+    \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(x_i) - f(y_i)\|_2^2 - \| f(x_i) - f(z_i)\|_2^2 + \alpha)
+\end{equation}
+
+Let $f$ be parameterized by some parameter set $\theta \in \Theta$, and restrict $\| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta$. Then we can use our objective for empirical risk minimization by solving the following optimization problem:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 + \alpha) \\
+    \textrm{s.t.} \quad &  \| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta
+\end{aligned}
+\end{equation}
+
+While this objective has seen widespread usage for learning image and word embeddings, there has been no corresponding convergence analysis to date, even for a simple case. The goal of this work is to present a convergence analysis for an affine choice of $f$: $f(A, b; x) = Ax + b$, $A \in \mathbb{R}^{d \times m}, b \in \mathbb{R}^d$. To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
+
+Then we can simplify the optimization problem as follows:
+
+\begin{flalign*}
+& \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 & \\
+& = \| f(\theta; x_i) \|_2^2 + \| f(\theta; y_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) \rangle - \| f(\theta; x_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) \rangle \\
+& = \| f(\theta; y_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \\
+& = 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \quad\text{(using $\| f(\theta)\|_2 = 1$)} \\
+\end{flalign*}
+
+Now substituting affine choice of $f$:
+
+\begin{flalign*}
+& = 2\langle f(\tilde{A}; \tilde{x_i}), f(\tilde{A}; \tilde{z_i}) - f(\tilde{A}; \tilde{y_i}) \rangle & \\
+& = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i})
+\end{flalign*}
+
+And our optimization problem can be written as:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha) \\
+    \textrm{s.t.} \quad &  \| f(\tilde{A})\|_2 = 1
+\end{aligned}
+\end{equation}
+
+We note that this problem is convex, but not smooth.
+
+\bigskip
+
+***\textbf{Note}: Actually, I am not sure if the problem can be written that way, since the constraint $\| f(\theta)\|_2 = 1$ is obtained in practice by dividing $f$ by its norm: $\| g(\theta)\|_2 = \frac{f(\theta)}{\| f(\theta)\|_2} \rightarrow \| g(\theta)\|_2 = 1$. In this case, the problem would look like:
+
+\begin{equation}
+\begin{aligned}
+    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max\left(0, 2\left\langle \frac{\tilde{A} \tilde{x_i}}{\| \tilde{A} \tilde{x_i} \|_2}, \frac{\tilde{A} \tilde{z_i}}{\| \tilde{A} \tilde{z_i} \|_2} - \frac{\tilde{A} \tilde{y_i}}{\| \tilde{A} \tilde{y_i} \|_2} \right\rangle + \alpha\right)
+\end{aligned}
+\end{equation}
+
+I am not sure if this can be reformulated as a convex problem.
 
 In this work we study:
 \begin{itemize}
@@ -360,64 +421,6 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not de
 
 \subsection{Comparison to logistic loss for SVM in terms of hyperplane boundary learned}
 
-\section{Analysis of Original Problem}
-
-% ========== Begin answering questions here 
-The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature \cite{schroff_facenet_2015, hermans_defense_2017}. Let $X, Y, Z \in \mathbb{R}^{n \times m}$ be a collection of data, with samples $x_i, y_i, z_i \in \mathbb{R}^m$ being rows from each matrix respectively, such that samples from $X$ and $Y$ have the same label, and samples from $Z$ have a different label. Let $f: \mathbb{R}^m \rightarrow \mathbb{R}^d$ be an \textit{embedding function} which projects samples into an \textit{embedding space}, $\mathbb{R}^d$. Let $\alpha \in \mathbb{R}^+$ be the margin parameter. Then the triplet margin loss can be stated as follows:
-
-\begin{equation}
-    \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(x_i) - f(y_i)\|_2^2 - \| f(x_i) - f(z_i)\|_2^2 + \alpha)
-\end{equation}
-
-Let $f$ be parameterized by some parameter set $\theta \in \Theta$, and restrict $\| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta$. Then we can use our objective for empirical risk minimization by solving the following optimization problem:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 + \alpha) \\
-    \textrm{s.t.} \quad &  \| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta
-\end{aligned}
-\end{equation}
-
-While this objective has seen widespread usage for learning image and word embeddings, there has been no corresponding convergence analysis to date, even for a simple case. The goal of this work is to present a convergence analysis for an affine choice of $f$: $f(A, b; x) = Ax + b$, $A \in \mathbb{R}^{d \times m}, b \in \mathbb{R}^d$. To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
-
-Then we can simplify the optimization problem as follows:
-
-\begin{flalign*}
-& \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 & \\
-& = \| f(\theta; x_i) \|_2^2 + \| f(\theta; y_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) \rangle - \| f(\theta; x_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) \rangle \\
-& = \| f(\theta; y_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \\
-& = 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \quad\text{(using $\| f(\theta)\|_2 = 1$)} \\
-\end{flalign*}
-
-Now substituting affine choice of $f$:
-
-\begin{flalign*}
-& = 2\langle f(\tilde{A}; \tilde{x_i}), f(\tilde{A}; \tilde{z_i}) - f(\tilde{A}; \tilde{y_i}) \rangle & \\
-& = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i})
-\end{flalign*}
-
-And our optimization problem can be written as:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha) \\
-    \textrm{s.t.} \quad &  \| f(\tilde{A})\|_2 = 1
-\end{aligned}
-\end{equation}
-
-We note that this problem is convex, but not smooth.
-
-\bigskip
-
-***\textbf{Note}: Actually, I am not sure if the problem can be written that way, since the constraint $\| f(\theta)\|_2 = 1$ is obtained in practice by dividing $f$ by its norm: $\| g(\theta)\|_2 = \frac{f(\theta)}{\| f(\theta)\|_2} \rightarrow \| g(\theta)\|_2 = 1$. In this case, the problem would look like:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max\left(0, 2\left\langle \frac{\tilde{A} \tilde{x_i}}{\| \tilde{A} \tilde{x_i} \|_2}, \frac{\tilde{A} \tilde{z_i}}{\| \tilde{A} \tilde{z_i} \|_2} - \frac{\tilde{A} \tilde{y_i}}{\| \tilde{A} \tilde{y_i} \|_2} \right\rangle + \alpha\right)
-\end{aligned}
-\end{equation}
-
-I am not sure if this can be reformulated as a convex problem.
 
 \section{Analysis of Relaxed Problem}
 
