@@ -11,17 +11,20 @@
 
 
 \newcommand{\numpy}{{\tt numpy}}    % tt font for numpy
+\DeclareMathOperator*{\argmin}{arg\,min}
 
-\topmargin -.5in
-\textheight 9in
-\oddsidemargin -.25in
-\evensidemargin -.25in
-\textwidth 7in
+%\topmargin -.5in
+%\textheight 9in
+%\oddsidemargin -.25in
+%\evensidemargin -.25in
+%\textwidth 7in
 
 \begin{document}
 
+
 % ========== Edit your name here
-\author{Luke Jaffe}
+\author{Lucas Jaffe}
+
 \title{
     EECS227C Project \\
     \large Convergence Analysis for Gradient Methods on Metric Learning Objectives
@@ -58,7 +61,33 @@ Other stuff:
 
 \subsection{Analysis of Full Function Minima}
 
- 
+The function $f(w; u, v)$ has two possible minima, which are dependent on the data $u, v$. Let $B = uu^{\top} - vv^{\top}$. Then we have
+
+\begin{equation}
+    f(w; B) = \log(\exp(w^{\top}Bw) + 1)
+\end{equation}
+
+Since $w^{\top}Bw$ has the form of a standard quadratic in $w$, we have
+
+\begin{equation}
+    \min_{w} w^{\top}Bw = \begin{cases} 
+    0 &\mbox{if } B \succeq 0 \\
+    -\infty & \mbox{otherwise } \end{cases}
+\end{equation}
+
+Extending this to $f(w; B)$, we have
+
+\begin{equation}
+    \inf_{w} f(w; B) = \begin{cases} 
+    \log(2) &\mbox{if } B \succeq 0 \\
+    0 & \mbox{otherwise } \end{cases}
+\end{equation}
+
+We note that $B \succeq 0$ will occur if and only if $u, v$ are linearly dependent.
+
+\subsection{Smoothness analysis of composite functions}
+
+Show smoothness for LogSumExp, quadratic, to give intuition for following results
 
 \subsection{Smoothness Analysis of $g(w)$}
 
@@ -156,11 +185,25 @@ In this section, we analyze a simplified version of the target function, with $\
 We can simplify further by letting $B = uu^\top - vv^\top$:
 
 \begin{equation}
+\label{eq:f}
     f(w) = \log(\exp(w^{\top}Bw) + 1)
 \end{equation}
 
 \begin{equation}
     \nabla f(w) = \frac{2 \exp(w^{\top}Bw)Bw}{\exp(w^{\top}Bw) + 1}
+\end{equation}
+
+We can simplify the notation using the substitution
+
+\begin{equation}
+q = \frac{\exp(w^{\top}Bw)}{\exp(w^{\top}Bw) + 1}
+\end{equation}
+
+Applying this substitution, we have
+
+\begin{equation}
+\label{eq:grad_f}
+    \nabla f(w) = 2qBw
 \end{equation}
 
 To find the Hessian, we break the gradient into two parts for use of the chain rule:
@@ -179,12 +222,7 @@ Combining the parts:
     \nabla^2 f(w) = \frac{4 \exp(w^{\top}Bw)B(ww^{\top}B + \frac{1}{2}I_d)}{\exp(w^{\top}Bw) + 1} - \frac{4 \{\exp(w^{\top}Bw)\}^2 Bww^{\top}B }{\{\exp(w^{\top}Bw) + 1\}^2}
 \end{align*}
 
-We can simplify further by using the substitution: 
-\begin{align*}
-q = \frac{\exp(w^{\top}Bw)}{\exp(w^{\top}Bw) + 1}
-\end{align*}
-
-Using this substitution, we have:
+Using this substitution of $q$,  we have:
 \begin{equation}
     \nabla^2 f(w) = 4q(1-q)Bww^{\top}B + 2qB
 \end{equation}
@@ -207,12 +245,114 @@ This gives us:
 
 Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2$.
 
+\subsection{Gradient descent analysis of full function}
 
-\subsection{Gradient Descent Analysis of Full Function}
+We analyze the standard gradient step
+
+\begin{equation}
+    w^{t+1} = w^t - \eta \nabla f(w^t)
+\end{equation}
+
+We would like to show that the following descent condition holds for some $\eta > 0, c < 0$
+
+\begin{equation}
+\label{eq:descent_condition}
+    f(w^{t+1}) \leq f(w^t) + c
+\end{equation}
+
+This property is not guaranteed in general for a difference of convex functions, and we cannot rely on properties of convexity that would typically be applied. Fortunately, this function has special structure as we will show in the following derivation.
+
+\begin{equation}
+    f(w^{t+1}) = f(w^t - \eta \nabla f(w^t)) 
+\end{equation}
+
+Using $\nabla f(w))$ from Eq. (\ref{eq:grad_f}) , we have
+
+\begin{align*}
+    w - \eta \nabla f(w) &= w - 2qBw \\
+    &= (I_d - 2qB)w
+\end{align*}
+
+Applying this term to $f$ from (\ref{eq:f}), we get
+
+\begin{equation}
+\begin{split}
+    f(w^t - \eta \nabla f(w^t)) 
+    &= \log(\exp(w^{\top}(I_d - 2 \eta qB)B(I_d - 2 \eta qB)w) + 1) \\
+    &= \log(\exp(w^{\top}Bw + w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w) + 1)
+\end{split}
+\end{equation}
+
+Let $b_\eta = w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w$. Making this substitution, we have
+
+\begin{equation}
+\begin{split}
+    f(w^t - \eta \nabla f(w^t)) 
+    &= \log(\exp(w^{\top}Bw + b_\eta ) + 1) \\
+    &= \log(\exp(w^{\top}Bw)\exp(b_\eta ) + 1)
+\end{split}
+\end{equation}
+
+Examining the desired descent condition from (\ref{eq:descent_condition}), we want to find some $c < 0$ such that
+
+\begin{align*}
+    f(w^{t+1}) - f(w^t) \leq c
+\end{align*}
+
+Substituting in, we find that
+
+\begin{align*}
+    f(w^{t+1}) - f(w^t) &= 
+    \log(\exp(w^{\top}Bw)\exp(b_\eta ) + 1) - \log(\exp(w^{\top}Bw) + 1) \\
+    &= \log \left\{ \frac{\exp(w^{\top}Bw)\exp(b_\eta ) + 1}{\exp(w^{\top}Bw) + 1} \right\} \\
+    &= \log( q \exp(b_\eta ) + (1 - q))
+\end{align*}
+
+Therefore, we must select $c < \log( q \exp(b_\eta ) + (1 - q))$ to satisfy the descent condition. In particular, this form shows that the descent condition holds for $b_\eta < 0$.
+
+\subsection{Selecting the step size $\eta$}
+
+Since we have that $f(w^{t+1}) < f(w^t) + c, \; c < 0$ we would like to select the step size $\eta$ such that $c$ is minimized at each step. Using the direct line search approach, we attempt to solve the following optimization problem:
+
+\begin{equation}
+    c^* = \min_{\eta} \log( q \exp(b_\eta ) + (1 - q))
+\end{equation}
+
+In terms of $\eta$, we want to find
+
+\begin{equation}
+\label{eq:eta_opt}
+\begin{split}
+    \eta^* &= \argmin_{\eta} \log( q \exp(b_\eta ) + (1 - q)) \\
+    &= \argmin_{\eta} b_\eta \\
+    &= \argmin_{\eta} w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w
+\end{split}
+\end{equation}
+
+% Solve two cases: one where B is PSD, the other where it isn't
+Recall that $B \nsucceq 0$, which means that problem (\ref{eq:eta_opt}) is not convex. We will show that a good choice of $\eta$ is $\eta = \frac{1}{\|B\|_2}$.
+
+\begin{align*}
+    b_\eta &= w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w \\
+    &= \frac{4 q^2 w^{\top} B^3 w}{\|B\|_2^2} - \frac{4 q w^{\top} B^2 w}{\|B\|_2} \\
+    &\leq \frac{4 q^2 \|B\|_2^3}{\|B\|_2^2} - \frac{4 q \|B\|_2^2 }{\|B\|_2} \\
+    &= 4 q (q-1) \|B\|_2 \\
+    &\implies -\|B\|_2 \leq 4 q (q-1) \|B\|_2 \leq 0
+\end{align*}
+
+The last step using $-\frac{1}{4} \leq q (q-1) \leq 0$. Since the given choice of $\eta$ is the largest valid choice which guarantees $b_\eta \leq 0$, it is optimal.
+
+\subsection{A bound on the descent iterate}
+
+\subsection{Convergence analysis using descent condition}
 
 \subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
 
 \subsection{Extension to case with $m > 1$}
+
+\subsection{Analysis with bias term}
+
+\subsection{Comparison to logistic loss for SVM in terms of hyperplane boundary learned}
 
 \section{Analysis of Original Problem}
 
