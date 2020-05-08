@@ -342,9 +342,13 @@ Recall that $B \nsucceq 0$, which means that problem (\ref{eq:eta_opt}) is not c
 
 The last step using $-\frac{1}{4} \leq q (q-1) \leq 0$. Since the given choice of $\eta$ is the largest valid choice which guarantees $b_\eta \leq 0$, it is optimal.
 
-\subsection{A bound on the descent iterate}
-
 \subsection{Convergence analysis using descent condition}
+
+Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not depend on the iterate, we get a very simple convergence bound. Let
+
+\begin{align*}
+    T \leq \frac{f(w^{t+1}) - f(w^*)}{c}
+\end{align*}
 
 \subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
 
