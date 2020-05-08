@@ -27,8 +27,8 @@
 \author{Lucas Jaffe}
 
 \title{
-    EECS227C Project \\
-    \large Convergence Analysis for Gradient Descent on the Triplet Margin Loss
+    Analysis of Gradient Descent on the Triplet Margin Loss \\
+    \large EECS227C Project
     }
 \maketitle
 
@@ -37,26 +37,76 @@
 \section{Introduction}
 
 % ========== Begin answering questions here 
-The \textit{triplet margin loss} function is a common \textit{metric learning} objective function, which has been demonstrated as empirically effective in the deep learning literature \cite{schroff_facenet_2015, hermans_defense_2017}. Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $f: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$ on $X$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was commonly studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification. 
+The goal of this project is to study gradient descent on the triplet margin loss function, a non-convex objective function used in the metric learning domain.
 
-More recently, metric learning has been combined with deep learning into a highly accurate vehicle for three computer vision problems: verification, re-identification, and retrieval. In the image verification problem, the goal is to tell whether two images belong to the same instance. This is commonly used for authentication of identity, either for unlocking a smartphone (\cite{apple}), or more recently for airport security (\cite{mccartney_are_2019}). In the image re-identification problem, the goal is to search a database for a single matching image to a query image. This is commonly used for re-identification of people / faces (\cite{schroff_facenet_2015}), and vehicles (\cite{liu_deep_2016}). In the image retrieval problem, the goal is to return all similar or matching images to a query image. This is used in reverse image search applications, as in (\cite{google, tineye}).
+\subsection{Background}
+ 
+ Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $\phi: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification, as in \cite{weinberger_distance_2009}. 
 
-Let $X, Y, Z \in \mathbb{R}^{n \times m}$ be a collection of data, with samples $x_i, y_i, z_i \in \mathbb{R}^m$ being rows from each matrix respectively, such that samples from $X$ and $Y$ have the same label, and samples from $Z$ have a different label. Let $f: \mathbb{R}^m \rightarrow \mathbb{R}^d$ be an \textit{embedding function} which projects samples into an \textit{embedding space}, $\mathbb{R}^d$. Let $\alpha \in \mathbb{R}^+$ be the margin parameter. Then the triplet margin loss can be stated as follows:
+More recently, metric learning has been combined with deep learning into a highly accurate vehicle for solving three computer vision problems: verification, re-identification, and retrieval. In the image verification problem, the goal is to tell whether two images belong to the same instance. This is commonly used for authentication of identity, either for unlocking a smartphone\footnote{\url{https://support.apple.com/en-us/HT208108}}, or more recently for airport security (\cite{mccartney_are_2019}). In the image re-identification problem, the goal is to search a database for a single matching image to a query image. This is commonly used for re-identification of people (\cite{zheng_scalable_2015}) / faces (\cite{schroff_facenet_2015}), and vehicles (\cite{liu_deep_2016}). In the image retrieval problem, the goal is to return all similar or matching images to a query image. This is used in reverse image search applications, e.g., from Google\footnote{\url{https://support.google.com/websearch/answer/1325808?co=GENIE.Platform\%3DDesktop&hl=en}} and TinEye\footnote{\url{https://tineye.com/technology}}.
+
+\subsection{Problem setup}
+
+The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature, esp. for facial recognition \cite{schroff_facenet_2015}. This is the primary objective function used in the popular OpenFace library (\cite{amos_openface_nodate}). Further, this objective has longevity in the literature, having been defended in \cite{hermans_defense_2017}, and recently generalized in \cite{qian_softtriple_2019}.
+
+A triplet is defined as a set of three samples, two of which share the same label, and one of which has a different label. Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, we define $X' \in \mathbb{R}^{n' \times m}$ as the set of all possible triplets from $X, Y$. For a given triplet $x_i$, we denote the two samples sharing a label as $x_i^a, x_i^p$ (anchor and positive), and the third sample $x_i^n$ (negative). In addition, we define a margin parameter $\alpha \in \mathbb{R}^+$. Then the triplet margin loss can be stated as follows:
 
 \begin{equation}
-    \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(x_i) - f(y_i)\|_2^2 - \| f(x_i) - f(z_i)\|_2^2 + \alpha)
+    \frac{1}{n'} \sum_{i=1}^{n'} \max(0, \| \phi(x_i^a) - \phi(x_i^p)\|_2^2 - \| \phi(x_i^a) - \phi(x_i^n)\|_2^2 + \alpha)
 \end{equation}
 
-Let $f$ be parameterized by some parameter set $\theta \in \Theta$, and restrict $\| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta$. Then we can use our objective for empirical risk minimization by solving the following optimization problem:
+We note that the triplet margin formulation described here closely follows from \cite{schroff_facenet_2015}.
+
+Observing $\phi$ as a function of some parameter set $\theta$, parameterized by the triplet set $X'$, we can use our objective for empirical risk minimization by solving the following optimization problem:
 
 \begin{equation}
+\label{eq:triplet_objective}
 \begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 + \alpha) \\
-    \textrm{s.t.} \quad &  \| f(\theta)\|_2 = 1 \quad \forall \theta \in \Theta
+    \min_{\theta} \frac{1}{n'} \sum_{i=1}^{n'} \max(0, \| \phi(\theta; x_i^a) - \phi(\theta; x_i^p)\|_2^2 - \| \phi(\theta; x_i^a) - \phi(\theta; x_i^n)\|_2^2 + \alpha)
 \end{aligned}
 \end{equation}
 
-While this objective has seen widespread usage for learning image and word embeddings, there has been no corresponding convergence analysis to date, even for a simple case. The goal of this work is to present a convergence analysis for an affine choice of $f$: $f(A, b; x) = Ax + b$, $A \in \mathbb{R}^{d \times m}, b \in \mathbb{R}^d$. To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
+Conceptually, the goal of this problem is to learn $\theta$ such that samples with the same label are closer together in Euclidean space than samples with different labels. Observing each class cluster as a hypersphere in $\mathbb{R}^d$, achieving a value of $0$ for this objective corresponds to pushing each class hypersphere apart by the max squared diameter of any class hypersphere plus the margin parameter $\alpha$. In practice, this objective has been found to have nice generalization properties for out-of-sample data.
+
+While this objective has seen widespread usage for learning image and word embeddings, there has been no corresponding convergence analysis to date, even for a simple case. The goal of this work is to present an analysis of gradient descent for a simplified smooth version of (\ref{eq:triplet_objective}), with $\phi$: $\phi(w; x) = \langle w, x \rangle$, $w \in \mathbb{R}^{m}$, with $n=1, d=1$. The reasoning for this choice will be presented in the following sections.
+
+\subsection{DC reformulation}
+
+It is clear that (\ref{eq:triplet_objective}) is not convex or differentiable as posed, but we will show that for affine choice of $\phi$, the objective can be reformulated as a difference of convex functions (DC function). Let $A \in \mathbb{R}^{d \times m}$, and let $\phi(A; x) = Ax$. Then we have
+
+\begin{align*}
+    f(A; X') &= \frac{1}{n'} \sum_{i=1}^{n'} \max(0, \| Ax_i^a - Ax_i^p\|_2^2 - \| Ax_i^a - Ax_i^n \|_2^2 + \alpha) \\
+    &= \frac{1}{n'} \sum_{i=1}^{n'} \max(0, (x_i^a - x_i^p)A^{\top}A(x_i^a - x_i^p) - (x_i^a - x_i^n)A^{\top}A(x_i^a - x_i^n) + \alpha) 
+\end{align*}
+
+Let $u_i = x_i^a - x_i^p$ and $v_i = x_i^a - x_i^n$. Using the identity $\max(0, a - b) = \max(a, b) - b$, we have
+
+\begin{align*}
+    f(A; X') &= \frac{1}{n'} \sum_{i=1}^{n'} \max(u_i A^{\top}Au_i + \alpha, \; v_i A^{\top}A v_i) - v_i A^{\top}A v_i \\
+    &= \frac{1}{n'} \sum_{i=1}^{n'} \max(u_i A^{\top}Au_i + \alpha, \; v_i A^{\top}A v_i) - \frac{1}{n'} \sum_{i=1}^{n'} v_i A^{\top}A v_i
+\end{align*}
+
+Since $A^{\top}A \succeq 0$, \; $u_i A^{\top}Au_i \geq 0$ is convex. In addition, we know that a max of convex functions is convex, and a sum of convex functions is convex. Thus, we have a difference of convex functions
+
+\begin{equation}
+    f(A; X') = g(A; X') - h(A; X')
+\end{equation}
+
+with
+
+\begin{equation}
+    g(A; X') = \frac{1}{n'} \sum_{i=1}^{n'} \max(u_i A^{\top}Au_i + \alpha, \; v_i A^{\top}A v_i)
+\end{equation}
+
+\begin{equation}
+    h(A; X') = \frac{1}{n'} \sum_{i=1}^{n'} v_i A^{\top}A v_i
+\end{equation}
+
+We note that there is a large body of literature focused on optimizing functions of the DC form, including \cite{}, \cite{lipp_variations_2016}, and \cite{khamaru_convergence_nodate}.
+
+\subsection{Smooth Approximation}
+
+In addition, the objective can be smoothed using the LogSumExp function, which can approximate the max function arbitrarily closely using a parameter $\mu$. 
 
 Then we can simplify the optimization problem as follows:
 
@@ -414,11 +464,17 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not de
     T \leq \frac{f(w^{t+1}) - f(w^*)}{c}
 \end{align*}
 
-\subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
+\subsection{Visualization}
 
-\subsection{Extension to case with $m > 1$}
+\subsection{Experiments}
 
-\subsection{Analysis with bias term}
+%\subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
+
+%\subsection{Extension to case with $m > 1$}
+
+%\subsection{Analysis with bias term}
+
+To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
 
 \subsection{Comparison to logistic loss for SVM in terms of hyperplane boundary learned}
 
