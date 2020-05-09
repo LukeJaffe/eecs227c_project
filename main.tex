@@ -60,8 +60,6 @@
 % ========== Begin answering questions here 
 The goal of this project is to study gradient descent on the triplet margin loss function, a non-convex objective function used in the metric learning domain. The GitHub repository for the project is linked here\footnote{\url{https://github.com/LukeJaffe/eecs227c_project}}.
 
-\textbf{*Note:} This version of the document is incomplete (submitted 05/08/2020) and the complete version will be submitted on 05/09/2020.
-
 \subsection{Background}
  
  Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $\phi: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification, as in \cite{weinberger_distance_2009}. 
@@ -130,6 +128,11 @@ We note that there is a large body of literature focused on optimizing functions
 To simplify the analysis, we focus on the case where $n = 1, d = 1$, and replace the matrix $A$ with the vector $w \in \mathbb{R}^m$. Using this substitution, we have
 
 \begin{equation}
+\label{eq:full_orig_margin_f}
+    f(w; X') = \max((w^{\top} u)^2 + \alpha, \; (w^{\top} v)^2) - (w^{\top} v)^2
+\end{equation}
+
+\begin{equation}
     g(w; X') = \max((w^{\top} u)^2 + \alpha, \; (w^{\top} v)^2)
 \end{equation}
 
@@ -171,6 +174,10 @@ For clarity, we write out the full function in this form as well
 For our initial analysis, we observe the case where $\mu = 1$ and $\alpha = 0$.
 
 \begin{equation}
+    f(w; X') = \log(\exp((w^{\top} u)^2), \; \exp((w^{\top} v)^2)) - (w^{\top} v)^2 
+\end{equation}
+
+\begin{equation}
     g(w; X') = \log(\exp((w^{\top} u)^2), \; \exp((w^{\top} v)^2))
 \end{equation}
 
@@ -178,11 +185,15 @@ For our initial analysis, we observe the case where $\mu = 1$ and $\alpha = 0$.
 
 In this section, we clarify notation which will be utilized in following sections.
 
+We use the notation $f, f(w), f(w; X'), f(w; u, v)$ interchangeably, with $u = u_i = x_i^a - x_i^p$ and $v = v_i = x_i^a - x_i^n$. The same goes for functions $g$ and $h$.
+
 The notation $xx^{\top}$ is used frequently, referring to the dyadic matrix which is an outer product of some vector $x \in \mathbb{R}^m$ with itself. This matrix is rank one and positive semi-definite, with its only nonzero eigenvalue $\lambda_{\max}(xx^{\top}) = x^{\top}x = \|x\|_2^2$.
+
+When we say a function is $M$-smooth, we mean that it has $M$-Lipschitz gradients.
 
 \subsection{Smoothness of composite functions}
 
-We begin with an analysis of the smoothness of the quadratic function $(w^{\top} x)^2)$ and the LogSumExp function, to help interpret later results.
+To help interpret later results, we analyze the smoothness of the quadratic function $(w^{\top} x)^2)$ and the LogSumExp function.
 
 We have that
 
@@ -192,17 +203,27 @@ We have that
 
 Meaning that $(w^{\top} x)^2$ is $M$-smooth, with $M = \lambda_{\max}(xx^{\top}) = \|x\|_2^2$.
 
-Analyzing the LogSumExp function, we have that
+Next, we analyze the LogSumExp function. Using the substitution $\tilde{w} = [\frac{1}{\mu}\exp(w_1), ..., \frac{1}{\mu}\exp(w_m)]$, we can write the softmax function as
 
 \begin{equation}
-    \nabla^2 \textrm{LSE}(w; \mu) = 
+    s(w) = \frac{\tilde{w}}{\sum_{j=1}^{m} \tilde{w}_j}
 \end{equation}
 
-A proof of these facts can be found in \cite{gao_properties_2018}.
+Then we have that the Hessian of the LogSumExp function is
 
-This section will be finished shortly.
+\begin{equation}
+    \nabla^2 \textrm{LSE}(w; \mu) = \frac{1}{\mu} (\textrm{diag}(s(w)) - s(w)s(w)^{\top}) 
+\end{equation}
 
-\subsection{Analysis of Full Function Minima}
+and we have
+
+\begin{equation}
+    0 \preceq \nabla^2 \textrm{LSE}(w; \mu) \preceq \frac{1}{\mu} I_m
+\end{equation}
+
+meaning that $\textrm{LSE}(w; \mu)$ is convex and $\frac{1}{\mu}$-smooth. A proof of these facts can be found in \cite{gao_properties_2018}.
+
+\subsection{Analysis of function minima}
 
 The function $f(w; u, v)$ has two possible minima, which are dependent on the data $u, v$. Let $B = uu^{\top} - vv^{\top}$. Then we have
 
@@ -228,8 +249,7 @@ Extending this to $f(w; B)$, we have
 
 We note that $B \succeq 0$ will occur if and only if $u, v$ are linearly dependent.
 
-In Figure \ref{fig:triplet_viz}, we show the triplet margin loss as posed in (\ref{eq:full_smooth_margin_f}), with $\alpha=0$ and $\alpha=0.1$. We see that
-We note that the randomly generated sample gives $f^*=0$ for both cases.
+In Figure \ref{fig:triplet_viz}, we show the triplet margin loss surface for a randomly generated 2-d triplet sample, as posed in (\ref{eq:full_orig_margin_f}) and (\ref{eq:full_smooth_margin_f}), with $\alpha=0$ and $\alpha=0.1$. We see that the loss surface is a classical saddle shape, intersecting with a plane for the original formulation. We note that the randomly generated sample gives $\inf_{w} f=0$ for both cases.
 
 \begin{figure}
   \centering
@@ -239,7 +259,7 @@ We note that the randomly generated sample gives $f^*=0$ for both cases.
   \caption{\label{fig:triplet_viz}This figure shows the triplet margin loss surface for a randomly generated 2-d triplet sample, with $\alpha = 0$ in the first row and $\alpha = 0.1$ in the second row. The leftmost plots show the original objective with no smoothing. The center plots show the smooth objective with $\mu=0.1$. The rightmost plots show the smooth objective with $\mu=1$. }
 \end{figure}
 
-\subsection{Smoothness Analysis of $g(w)$}
+\subsection{Smoothness analysis of $g(w)$}
 
 \begin{equation}
     g(w) = \log( \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) )
@@ -306,7 +326,7 @@ Plugging in to the Hessian expression:
     &- 8 p (1-p) (w^{\top}u)(w^{\top}v)(uv^{\top} + vu^{\top})
 \end{align*}
 
-Using $0 < p(1-p) \leq \frac{1}{4}$, we have, $\forall z \in \mathbb{R}^d$:
+Using $0 < p(1-p) \leq \frac{1}{4}$, we have, $\forall z \in \mathbb{R}^m$:
 
 \begin{align*}
     z^{\top} \nabla^2 g(w) z &\leq
@@ -318,13 +338,13 @@ Using $0 < p(1-p) \leq \frac{1}{4}$, we have, $\forall z \in \mathbb{R}^d$:
 This gives us:
 
 \begin{equation}
-    \nabla^2 g(w) \preceq \|w\|_2^2 \left\{ \|u\|_2^4 + \|v\|_2^4 + 4 \|u\|_2^2 \|v\|_2^2 \right\} I_d
+    \nabla^2 g(w) \preceq \|w\|_2^2 \left\{ \|u\|_2^4 + \|v\|_2^4 + 4 \|u\|_2^2 \|v\|_2^2 \right\} I_m
 \end{equation}
 
 Meaning that $g(w)$ is $M_g$-smooth, with $M_g = \|w\|_2^2 \left\{ \|u\|_2^4 + \|v\|_2^4 + 4 \|u\|_2^2 \|v\|_2^2 \right\}$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Smoothness Analysis of Full Function}
+\subsection{Smoothness analysis of $f(w)$}
 
 In this section, we analyze a simplified version of the target function, with $\mu = 1$ and $\alpha = 0$. We simplify notation by letting $u = x - y$ and $v = x - z$.
 
@@ -369,7 +389,7 @@ To find the Hessian, we break the gradient into two parts for use of the chain r
 Combining the parts:
 
 \begin{align*}
-    \nabla^2 f(w) = \frac{4 \exp(w^{\top}Bw)B(ww^{\top}B + \frac{1}{2}I_d)}{\exp(w^{\top}Bw) + 1} - \frac{4 \{\exp(w^{\top}Bw)\}^2 Bww^{\top}B }{\{\exp(w^{\top}Bw) + 1\}^2}
+    \nabla^2 f(w) = \frac{4 \exp(w^{\top}Bw)B(ww^{\top}B + \frac{1}{2}I_m)}{\exp(w^{\top}Bw) + 1} - \frac{4 \{\exp(w^{\top}Bw)\}^2 Bww^{\top}B }{\{\exp(w^{\top}Bw) + 1\}^2}
 \end{align*}
 
 Using this substitution of $q$,  we have:
@@ -377,7 +397,7 @@ Using this substitution of $q$,  we have:
     \nabla^2 f(w) = 4q(1-q)Bww^{\top}B + 2qB
 \end{equation}
 
-Noting that $0 < q < 1$ and $0 < q^2 \leq \frac{1}{4}$ we have, $\forall z \in \mathbb{R}^d$:
+Noting that $0 < q < 1$ and $0 < q^2 \leq \frac{1}{4}$ we have, $\forall z \in \mathbb{R}^m$:
 
 \begin{align*}
 z^{\top} \nabla^2 f(w) z 
@@ -390,12 +410,12 @@ z^{\top} \nabla^2 f(w) z
 This gives us:
 
 \begin{equation}
-    \nabla^2 f(w) \prec ( \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2 ) I_d
+    \nabla^2 f(w) \prec ( \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2 ) I_m
 \end{equation}
 
 Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2$.
 
-\subsection{Gradient descent analysis of full function}
+\subsection{Gradient descent analysis of $f(w)$}
 
 We analyze the standard gradient step
 
@@ -420,7 +440,7 @@ Using $\nabla f(w))$ from Eq. (\ref{eq:grad_f}) , we have
 
 \begin{align*}
     w - \eta \nabla f(w) &= w - 2qBw \\
-    &= (I_d - 2qB)w
+    &= (I_m - 2qB)w
 \end{align*}
 
 Applying this term to $f$ from (\ref{eq:f}), we get
@@ -428,7 +448,7 @@ Applying this term to $f$ from (\ref{eq:f}), we get
 \begin{equation}
 \begin{split}
     f(w^t - \eta \nabla f(w^t)) 
-    &= \log(\exp(w^{\top}(I_d - 2 \eta qB)B(I_d - 2 \eta qB)w) + 1) \\
+    &= \log(\exp(w^{\top}(I_m - 2 \eta qB)B(I_d - 2 \eta qB)w) + 1) \\
     &= \log(\exp(w^{\top}Bw + w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w) + 1)
 \end{split}
 \end{equation}
