@@ -6,6 +6,7 @@
 \usepackage{hyperref}  %hyperref still needs to be put at the end!
 %\usepackage[sorting=none]{biblatex}
 %\addbibresource{references.bib}
+\usepackage{graphicx}
 
 %\usepackage[square,numbers]{natbib}
 \bibliographystyle{abbrvnat}
@@ -497,6 +498,21 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not de
 
 \subsection{Visualization}
 
+
+\begin{figure}
+  \centering
+  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+  \includegraphics[width=\textwidth]{figures/triplet_viz.png}
+  \caption{This figure shows the triplet margin loss }
+\end{figure}
+
+\begin{figure}
+  \centering
+  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+  \includegraphics[width=\textwidth]{figures/triplet_viz.png}
+  \caption{This figure shows the triplet margin loss }
+\end{figure}
+
 \subsection{Experiments}
 
 %\subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
@@ -505,7 +521,7 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not de
 
 %\subsection{Analysis with bias term}
 
-To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
+%To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
 
 \subsection{Analysis of Gradient Method}
 
