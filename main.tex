@@ -154,7 +154,9 @@ Using this approximation, we can rewrite the first term of our DC reformulation 
     g(w; X') = \mu \log(\exp(\frac{1}{\mu}((w^{\top} u)^2) + \alpha), \; \exp(\frac{1}{\mu}(w^{\top} v)^2))
 \end{equation}
 
-\section{Methods}
+\subsection{Outline}
+
+\section{Results}
 
 For our initial analysis, we observe the case where $\mu = 1$ and $\alpha = 0$.
 
@@ -164,11 +166,29 @@ For our initial analysis, we observe the case where $\mu = 1$ and $\alpha = 0$.
 
 \subsection{Notation}
 
-In this section, we will use the notation
+In this section, we clarify notation which will be utilized in following sections.
+
+The notation $xx^{\top}$ is used frequently, referring to the dyadic matrix which is an outer product of some vector $x \in \mathbb{R}^m$ with itself. This matrix is rank one and positive semi-definite, with its only nonzero eigenvalue $\lambda_{\max}(xx^{\top}) = x^{\top}x = \|x\|_2^2$.
 
 \subsection{Smoothness of composite functions}
 
-We begin with an analysis of the smoothness of the quadratic function $(w^{\top} x)^2)$ and the LogSumExp function, to help understand later results.
+We begin with an analysis of the smoothness of the quadratic function $(w^{\top} x)^2)$ and the LogSumExp function, to help interpret later results.
+
+We have that
+
+\begin{equation}
+    \nabla_w^2 ((w^{\top} x)^2) = xx^{\top}
+\end{equation}
+
+Meaning that $(w^{\top} x)^2$ is $M$-smooth, with $M = \lambda_{\max}(xx^{\top}) = \|x\|_2^2$.
+
+Analyzing the LogSumExp function, we have that
+
+\begin{equation}
+    \nabla^2 \textrm{LSE}(w; \mu) = 
+\end{equation}
+
+A proof of these facts can be found in \cite{gao_properties_2018}.
 
 \subsection{Analysis of Full Function Minima}
 
@@ -453,7 +473,21 @@ Recall that $B \nsucceq 0$, which means that problem (\ref{eq:eta_opt}) is not c
 
 The last step using $-\frac{1}{4} \leq q (q-1) \leq 0$. Since the given choice of $\eta$ is the largest valid choice which guarantees $b_\eta \leq 0$, it is optimal.
 
-\subsection{Convergence analysis using descent condition}
+\subsection{Bound on the iterate}
+
+\subsection{Convergence of the squared gradient norm}
+
+In \cite{khamaru_convergence_2018}, the following bound is given on the average squared gradient norm, with $\eta \in (0, \frac{1}{M_g}]$
+
+\begin{equation}
+    \textrm{Avg}(\|\nabla f(x^k) \|_2^2) \leq \frac{2(f(x^0) - f^*)}{\eta(k + 1)}
+\end{equation}
+
+
+
+We would like to attempt improvement of this bound using the specific properties of our function.
+
+\subsection{Convergence of the function value}
 
 Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not depend on the iterate, we get a very simple convergence bound. Let
 
@@ -473,191 +507,25 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not de
 
 To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
 
-\subsection{Comparison to logistic loss for SVM in terms of hyperplane boundary learned}
-
-
-\section{Analysis of Relaxed Problem}
-
-To alleviate issues with the previous formulation, including non-smoothness of the max function, and the norm constraint, we can relax the problem to be easier to analyze, while retaining its high-level properties. Specifically, we will swap the max function for the softplus function, and remove the norm constraint altogether.
-
-\begin{equation}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \log{(1 + \exp{( \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 + \alpha)})}
-\end{aligned}
-\end{equation}
-
-With affine choice of f:
-
-\begin{equation}
-\label{eq:smooth_problem}
-\begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \log{(1 + \exp{(\tilde{y_i}^\top\tilde{A}^\top\tilde{A}\tilde{y_i} - \tilde{z_i}^\top\tilde{A}^\top\tilde{A}\tilde{z_i} + 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha)})}
-\end{aligned}
-\end{equation}
-
-To check convexity of this function, we only need to study the inner portion:
-
-\begin{equation}
-\begin{aligned}
-g(\tilde{A}) = \tilde{y_i}^\top\tilde{A}^\top\tilde{A}\tilde{y_i} - \tilde{z_i}^\top\tilde{A}^\top\tilde{A}\tilde{z_i} + 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha
-\end{aligned}
-\end{equation}
-
-We can check if the Hessian of this function is PSD:
-
-\begin{align*}
-\nabla{g(\tilde{A})}
-&= 2\tilde{A}\tilde{y_i}\tilde{y_i}^\top - 2\tilde{A}\tilde{z_i}\tilde{z_i}^\top + 2\tilde{A}(\tilde{x_i}(\tilde{z_i} - \tilde{y_i})^\top + (\tilde{z_i} - \tilde{y_i})\tilde{x_i}^\top) \\
-&= 2\tilde{A}(\tilde{y_i}\tilde{y_i}^\top - \tilde{z_i}\tilde{z_i}^\top + \tilde{x_i}(\tilde{z_i} - \tilde{y_i})^\top + (\tilde{z_i} - \tilde{y_i})\tilde{x_i}^\top)
-\end{align*}
-
-\begin{equation}
-\begin{aligned}
-\nabla^2 g(\tilde{A})
-&= \textrm{4d tensor}
-\end{aligned}
-\end{equation}
-
-The Hessian is a 4d tensor, which complicates our analysis, so we will look at the case where $\tilde{A}$ is a vector as well. 
-
-Let $f(w; x) = w^{\top}x$. Then we have:
-\begin{equation}
-\begin{aligned}
-g(w) = (w^{\top}y)^2 - (w^{\top}z)^2 + 2(w^{\top}x)(w^{\top}(z - y))
-\end{aligned}
-\end{equation}
-
-\begin{equation}
-\begin{aligned}
-\nabla g(w) = 2(yy^{\top} - zz^{\top} + x(z - y)^{\top} + (z - y)x^{\top})w
-\end{aligned}
-\end{equation}
-
-\begin{equation}
-\begin{aligned}
-\nabla^2 g(w) = 2(yy^{\top} - zz^{\top} + x(z - y)^{\top} + (z - y)x^{\top})
-\end{aligned}
-\end{equation}
-
-It is clear that we must impose some additional normalization of the data to ensure the Hessian is PSD, but it's not clear what that should be. One possibility is to use the eigenvalues of the data-dependent term as follows. Let $Q = \nabla^2 g(w) = 2(yy^{\top} - zz^{\top} + x(z - y)^{\top} + (z - y)x^{\top})$. 
-
-\begin{equation}
-\begin{aligned}
-\nabla^2 \tilde{g}(w) = Q - diag(\lambda_{min}(Q))
-\end{aligned}
-\end{equation}
-
-\begin{equation}
-\begin{aligned}
-\nabla \tilde{g}(w) = (Q - diag(\lambda_{min}(Q)))w
-\end{aligned}
-\end{equation}
-
-\begin{equation}
-\begin{aligned}
-\tilde{g}(w) = \frac{1}{2}w^{\top}(Q - diag(\lambda_{min}(Q)))w
-\end{aligned}
-\end{equation}
-
-However, it is clear that this is trivial because the original problem is unbounded below if Q has a negative eigenvalue, and the new problem has a minimum of 0. The new problem doesn't do anything for us.
-
-If it is possible to ensure that the problem in (\ref{eq:smooth_problem}) is convex and smooth, we can analyze it using the standard techniques, and hopefully find a bound which is better than the generic bound.
-
-\section{DC Reformulation with Smoothing}
-
-Let us return to the original max formulation to show that it is DC if we use L2-norm instead of L2-norm-squared. We also remove the norm constraint.
-
-\begin{equation}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, \| f(\theta; x_i) - f(\theta; y_i)\|_2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2 + \alpha)
-\end{aligned}
-\end{equation}
-
-Let $g_i(\theta) = \| f(\theta; x_i) - f(\theta; y_i)\|_2 + \alpha, \quad h_i(\theta) = f(\theta; x_i) - f(\theta; z_i)\|_2$. Note that $g_i(\theta)$ and $h_i(\theta)$ are convex if $f(\theta)$ is affine. We can rewrite the objective as:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, g_i(\theta) - h_i(\theta))
-\end{aligned}
-\end{equation}
-
-Split up the max function:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(g_i(\theta), h_i(\theta)) - h_i(\theta)
-\end{aligned}
-\end{equation}
-
-Finally, we can split up the sum to show the full DC formulation:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(g_i(\theta), h_i(\theta)) - \frac{1}{n} \sum_{i=1}^{n} h_i(\theta)
-\end{aligned}
-\end{equation}
-
-Although this is DC for affine choice of $f(\theta)$, $h_i(\theta)$ is not smooth due to the max function and the L2-norm. To produce a smooth, convex approximation to the max function, we can use the LogSumExp function:
-
-\begin{equation}
-\begin{aligned}
-\textrm{LSE}(x_1, ..., x_n) = \log\sum_{i=1}^{n} \exp(x_i)
-\end{aligned}
-\end{equation}
-
-To produce a smooth approximation to the L2-norm, we can use the following:
-
-\begin{equation}
-\label{eq:smooth_2norm}
-\begin{aligned}
-\| x \|_\beta = \sqrt{\| x \|_2^2 + \beta^2} - \beta, \quad \beta > 0, x \in \mathbb{R}^d
-\end{aligned}
-\end{equation}
-
-Note that Eq. (\ref{eq:smooth_2norm}) is $\frac{1}{\beta}$-smooth.
-
-Using these functions, our final smoothed DC problem is:
-
-\begin{equation}
-\label{eq:smooth_dc}
-\begin{aligned}
-    \min_{\theta} \quad & \frac{1}{n} \sum_{i=1}^{n} \textrm{LSE}(g_i(\theta), h_i(\theta)) - \frac{1}{n} \sum_{i=1}^{n} h_i(\theta)
-\end{aligned}
-\end{equation}
-
-The affine version is:
-
-\begin{equation}
-\begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \log\left\{ \exp \left(\| \tilde{A}(\tilde{x}_i - \tilde{y}_i) \|_\beta + \alpha \right) + \exp \left(\| \tilde{A}(\tilde{x}_i - \tilde{z}_i) \|_\beta \right)  \right \} - \frac{1}{n} \sum_{i=1}^{n} \| \tilde{A}(\tilde{x}_i - \tilde{z}_i) \|_\beta
-\end{aligned}
-\end{equation}
-
-To start, we examine a simpler case where $\tilde{A} = w \in \mathbb{R}^d$ and $n = 1$:
-
-\begin{equation}
-\begin{aligned}
-    \min_{w} \quad & \log\left\{ \exp \left(\| w^{\top}(x - y) \|_\beta + \alpha \right) + \exp \left(\| w^{\top}(x - z) \|_\beta \right)  \right \} - \| w^{\top}(x - z) \|_\beta
-\end{aligned}
-\end{equation}
-
 \subsection{Analysis of Gradient Method}
 
 We analyze this formulation using the methodology from \cite{khamaru_convergence_2018}. To use the theorem proven in that work, we need $g$ to be continuously differentiable and $M_g$-smooth, and we need $h$ to be continuous and convex. These properties are satisfied for affine choice of $f$ in Problem (\ref{eq:smooth_dc}).
 
 Since $h_i(\theta)$ is differentiable for our case, we can use a regular gradient step and achieve the convergence bound for Algorithm 1 in \cite{khamaru_convergence_2018}. Not sure if it is necessary to constrict $\theta \in \mathcal{C}$ as in \cite{khamaru_convergence_2018}, but this can be done if necessary.
 
-\subsubsection{Does this formulation have a trivial solution? Or a closed form solution?}
-
 $A = w = 0$ does not minimize this function because of the margin parameter $\alpha$. As for finding a closed form solution, we can see if it is clear from computing the gradient.
-
-\subsubsection{Find smoothness $M_g$ and smoothness $M_h$}
-
-\subsubsection{Attempt improvement of convergence bound in \cite{khamaru_convergence_2018} using the specific properties of our function}
 
 \subsubsection{Does this smooth version allow for triplets which violate the original objective? If so, can this violation be quantified?}
 
-\section{Potential Next Steps for the Project}
+\section{Conclusion}
+
+\subsection{Discussion}
+
+Topic: Comparison to logistic loss for SVM in terms of hyperplane boundary learned
+
+\subsection{Future Work}
+
+\subsection{Previously wanted next steps}
 
 \begin{itemize}
   \item Trying different gradient methods
