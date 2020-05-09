@@ -60,6 +60,8 @@
 % ========== Begin answering questions here 
 The goal of this project is to study gradient descent on the triplet margin loss function, a non-convex objective function used in the metric learning domain. The GitHub repository for the project is linked here\footnote{\url{https://github.com/LukeJaffe/eecs227c_project}}.
 
+\textbf{*Note:} This version of the document is incomplete (submitted 05/08/2020) and the complete version will be submitted on 05/09/2020.
+
 \subsection{Background}
  
  Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $\phi: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification, as in \cite{weinberger_distance_2009}. 
@@ -155,6 +157,13 @@ Using this approximation, we can rewrite the first term of our DC reformulation 
     g(w; X') = \mu \log(\exp(\frac{1}{\mu}((w^{\top} u)^2) + \alpha), \; \exp(\frac{1}{\mu}(w^{\top} v)^2))
 \end{equation}
 
+For clarity, we write out the full function in this form as well
+
+\begin{equation}
+\label{eq:full_smooth_margin_f}
+    f(w; X') = \mu \log(\exp(\frac{1}{\mu}((w^{\top} u)^2) + \alpha), \; \exp(\frac{1}{\mu}(w^{\top} v)^2)) - (w^{\top} v)^2
+\end{equation}
+
 \subsection{Outline}
 
 \section{Results}
@@ -191,6 +200,8 @@ Analyzing the LogSumExp function, we have that
 
 A proof of these facts can be found in \cite{gao_properties_2018}.
 
+This section will be finished shortly.
+
 \subsection{Analysis of Full Function Minima}
 
 The function $f(w; u, v)$ has two possible minima, which are dependent on the data $u, v$. Let $B = uu^{\top} - vv^{\top}$. Then we have
@@ -217,9 +228,22 @@ Extending this to $f(w; B)$, we have
 
 We note that $B \succeq 0$ will occur if and only if $u, v$ are linearly dependent.
 
-\subsection{Smoothness analysis of composite functions}
+In Figures 1 and 2, we show the triplet margin loss as posed in (\ref{eq:full_smooth_margin_f}), with $\alpha=0$ and $\alpha=0.1$ respectively. We note that the randomly generated sample gives $f^*=0$ for both cases.
 
-Show smoothness for LogSumExp, quadratic, to give intuition for following results
+\begin{figure}
+  \centering
+  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+  \includegraphics[width=\textwidth]{figures/triplet_viz_alpha0.png}
+  \label{fig:triplet_alpha0}
+  \caption{This figure shows the triplet margin loss with $\alpha = 0$ for a randomly generated triplet sample. The leftmost figure shows the original objective with no smoothing. The center figure shows the smooth objective with $\mu=0.1$. The rightmost figure shows the smooth objective with $\mu=1$. }
+\end{figure}
+
+\begin{figure}
+  \centering
+  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+  \includegraphics[width=\textwidth]{figures/triplet_viz.png}
+  \caption{This figure is identical to Figure 1, but with $\alpha = 0.1$.}
+\end{figure}
 
 \subsection{Smoothness Analysis of $g(w)$}
 
@@ -476,6 +500,8 @@ The last step using $-\frac{1}{4} \leq q (q-1) \leq 0$. Since the given choice o
 
 \subsection{Bound on the iterate}
 
+This section will be added shortly.
+
 \subsection{Convergence of the squared gradient norm}
 
 In \cite{khamaru_convergence_2018}, the following bound is given on the average squared gradient norm, with $\eta \in (0, \frac{1}{M_g}]$
@@ -484,36 +510,13 @@ In \cite{khamaru_convergence_2018}, the following bound is given on the average 
     \textrm{Avg}(\|\nabla f(x^k) \|_2^2) \leq \frac{2(f(x^0) - f^*)}{\eta(k + 1)}
 \end{equation}
 
-
-
-We would like to attempt improvement of this bound using the specific properties of our function.
+We would like to attempt improvement of this bound using the specific properties of our function. This section will be added shortly.
 
 \subsection{Convergence of the function value}
 
-Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not depend on the iterate, we get a very simple convergence bound. Let
+Since we have $f(w^{t+1}) < f(w^t) + c$, we can attempt to show convergence of the function value. This section will be added shortly.
 
-\begin{align*}
-    T \leq \frac{f(w^{t+1}) - f(w^*)}{c}
-\end{align*}
-
-\subsection{Visualization}
-
-
-\begin{figure}
-  \centering
-  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \includegraphics[width=\textwidth]{figures/triplet_viz.png}
-  \caption{This figure shows the triplet margin loss }
-\end{figure}
-
-\begin{figure}
-  \centering
-  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \includegraphics[width=\textwidth]{figures/triplet_viz.png}
-  \caption{This figure shows the triplet margin loss }
-\end{figure}
-
-\subsection{Experiments}
+%\subsection{Experiments}
 
 %\subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
 
@@ -523,35 +526,47 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, and $c$ is a constant which does not de
 
 %To simplify analysis of gradient methods, we will concatenate $A$ and $b$ and append a $1$ to $x$: $\tilde{A} = [A, b]$, $\tilde{x}^\top = [x^\top, 1]$. Now we have $f(\tilde{A}; \tilde{x}) = \tilde{A} \tilde{x}$, $\tilde{A} \in \mathbb{R}^{d \times m+1}$.
 
-\subsection{Analysis of Gradient Method}
+% \subsection{Analysis of Gradient Method}
 
-We analyze this formulation using the methodology from \cite{khamaru_convergence_2018}. To use the theorem proven in that work, we need $g$ to be continuously differentiable and $M_g$-smooth, and we need $h$ to be continuous and convex. These properties are satisfied for affine choice of $f$ in Problem (\ref{eq:smooth_dc}).
+% We analyze this formulation using the methodology from \cite{khamaru_convergence_2018}. To use the theorem proven in that work, we need $g$ to be continuously differentiable and $M_g$-smooth, and we need $h$ to be continuous and convex. These properties are satisfied for affine choice of $f$ in Problem (\ref{eq:smooth_dc}).
 
-Since $h_i(\theta)$ is differentiable for our case, we can use a regular gradient step and achieve the convergence bound for Algorithm 1 in \cite{khamaru_convergence_2018}. Not sure if it is necessary to constrict $\theta \in \mathcal{C}$ as in \cite{khamaru_convergence_2018}, but this can be done if necessary.
+% Since $h_i(\theta)$ is differentiable for our case, we can use a regular gradient step and achieve the convergence bound for Algorithm 1 in \cite{khamaru_convergence_2018}. Not sure if it is necessary to constrict $\theta \in \mathcal{C}$ as in \cite{khamaru_convergence_2018}, but this can be done if necessary.
 
-$A = w = 0$ does not minimize this function because of the margin parameter $\alpha$. As for finding a closed form solution, we can see if it is clear from computing the gradient.
+% $A = w = 0$ does not minimize this function because of the margin parameter $\alpha$. As for finding a closed form solution, we can see if it is clear from computing the gradient.
 
-\subsubsection{Does this smooth version allow for triplets which violate the original objective? If so, can this violation be quantified?}
+%\subsubsection{Does this smooth version allow for triplets which violate the original objective? If so, can this violation be quantified?}
 
 \section{Conclusion}
 
 \subsection{Discussion}
 
-Topic: Comparison to logistic loss for SVM in terms of hyperplane boundary learned
+In this work, we show that the triplet margin loss function can be reformulated as a difference of convex functions, and that a reasonable smooth approximation can be formulated with the LogSumExp function. We show that this function is smooth, and give an upper bound for the smoothness which is dependent on the iterate. Then, we attempt a convergence analysis for the iterate, the squared gradient norm, and for the function value. While none of the convergence bounds achieved were very good, they lay a nice foundation for future work.
+
+One takeaway from this effort is that the condition of convexity cannot be trivially replaced just by knowing the function structure. 
+
+It would be interesting to see if different algorithms, including a proximal type alforithm, Frank-Wolfe, or the stochastic gradient method could be easier to anlalyze.
+
+We would also like to test if the functions satisfies the Kurdaya-Łojasiewicz, as detailed in \cite{khamaru_convergence_2018}, to achieve a faster convergence rate.
 
 \subsection{Future Work}
 
-\subsection{Previously wanted next steps}
+There are several extensions that we would like to perform on this analysis. First, we would like to repeat the analysis for $\alpha > 0$ and $\mu \neq 1$. Second we would like to analyze the multi-sample case ($n > 1$). Third we would like to study the case where $d > 1$. Fourth, we would like to add a learnable bias term to the analysis. Finally, we would like to study the stochastic case, so that this work can be applied in practice for empirical risk minimization, given randomly sampled data.
 
-\begin{itemize}
-  \item Trying different gradient methods
-  \item Use Nesterov momentum as in the Princeton slides
-  \item Analyzing stochastic gradient method for the problem
-  \item Attempting to analyze the non-smoothed problem
-  \item Empirical analysis using toy separable data with two classes
-  \item Compare empirical behavior of gradient methods for the relaxed problem vs. the original problem
-  \item Compare nearest neighbors performance for difference constraints on the weight space, C
-\end{itemize}
+One potential application of this analysis could be to ``warm-start'' the last layer of a neural network.
+
+We would also like to compare the function to the soft margin loss and logistic loss for the support vector machine (SVM). It would be interesting to compare the learned weights $w$, and see how the models compare in terms of generalization.
+
+% \subsection{Previously wanted next steps}
+
+% \begin{itemize}
+%   \item Trying different gradient methods
+%   \item Use Nesterov momentum as in the Princeton slides
+%   \item Analyzing stochastic gradient method for the problem
+%   \item Attempting to analyze the non-smoothed problem
+%   \item Empirical analysis using toy separable data with two classes
+%   \item Compare empirical behavior of gradient methods for the relaxed problem vs. the original problem
+%   \item Compare nearest neighbors performance for difference constraints on the weight space, C
+% \end{itemize}
 
 \bibliography{references}
 
