@@ -34,6 +34,26 @@
 
 \medskip
 
+% In this work we study:
+% \begin{itemize}
+%     \item Two metric learning objectives
+%     \item Relaxation and reformulation of these objectives as DC functions
+%     \item Smoothability of these objectives, and study of accuracy/smoothness tradeoff
+%     \item Dependence on data of conditioning of the problem
+%     \item Study of smoothness parameters vs. minima for original and smooth relaxation
+%     \item Interpretations of these objectives as learning a separating hyperplane with soft margin
+%     \item Extension of the objectives to learning an affine mapping instead of weight vector
+%     \item Different gradient methods for minimization of these objectives
+%     \item Possible extensions to the empirical risk minimization setting
+% \end{itemize}
+
+
+% Other stuff:
+% \begin{itemize}
+%     \item Different learning rate selection including exact line search, backtracking line search
+%     \item Nesterov momentum for speedup (for badly conditioned problems?)
+% \end{itemize}
+
 \section{Introduction}
 
 % ========== Begin answering questions here 
@@ -114,74 +134,41 @@ To simplify the analysis, we focus on the case where $n = 1, d = 1$, and replace
     h(w; X') = (w^{\top} v)^2
 \end{equation}
 
-\subsection{Smooth Approximation}
+\subsection{Smooth approximation}
 
-In addition, the objective can be smoothed using the LogSumExp function, which can approximate the max function arbitrarily closely using a parameter $\mu$. 
-
-Then we can simplify the optimization problem as follows:
-
-\begin{flalign*}
-& \| f(\theta; x_i) - f(\theta; y_i)\|_2^2 - \| f(\theta; x_i) - f(\theta; z_i)\|_2^2 & \\
-& = \| f(\theta; x_i) \|_2^2 + \| f(\theta; y_i) \|_2^2 - 2\langle f(\theta; x_i), f(\theta; y_i) \rangle - \| f(\theta; x_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) \rangle \\
-& = \| f(\theta; y_i) \|_2^2 - \| f(\theta; z_i) \|_2^2 + 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \\
-& = 2\langle f(\theta; x_i), f(\theta; z_i) - f(\theta; y_i) \rangle \quad\text{(using $\| f(\theta)\|_2 = 1$)} \\
-\end{flalign*}
-
-Now substituting affine choice of $f$:
-
-\begin{flalign*}
-& = 2\langle f(\tilde{A}; \tilde{x_i}), f(\tilde{A}; \tilde{z_i}) - f(\tilde{A}; \tilde{y_i}) \rangle & \\
-& = 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i})
-\end{flalign*}
-
-And our optimization problem can be written as:
+In addition, the objective can be smoothed using the LogSumExp function with parameter $\mu > 0$, which approximates the max function. Defining the LogSumExp function $\textrm{LSE}(x)$, $x \in \mathbb{R}^k$ as
 
 \begin{equation}
-\begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max(0, 2\tilde{x_i}^\top\tilde{A}^\top\tilde{A}(\tilde{z_i} - \tilde{y_i}) + \alpha) \\
-    \textrm{s.t.} \quad &  \| f(\tilde{A})\|_2 = 1
-\end{aligned}
+    \textrm{LSE}(x; \mu) = \mu \log \sum_{j=1}^{k} \exp(\frac{1}{\mu}x_j)
 \end{equation}
 
-We note that this problem is convex, but not smooth.
-
-\bigskip
-
-***\textbf{Note}: Actually, I am not sure if the problem can be written that way, since the constraint $\| f(\theta)\|_2 = 1$ is obtained in practice by dividing $f$ by its norm: $\| g(\theta)\|_2 = \frac{f(\theta)}{\| f(\theta)\|_2} \rightarrow \| g(\theta)\|_2 = 1$. In this case, the problem would look like:
+This function approximates the max function arbitrarily closely as $\mu$ approaches $0$
 
 \begin{equation}
-\begin{aligned}
-    \min_{\tilde{A}} \quad & \frac{1}{n} \sum_{i=1}^{n} \max\left(0, 2\left\langle \frac{\tilde{A} \tilde{x_i}}{\| \tilde{A} \tilde{x_i} \|_2}, \frac{\tilde{A} \tilde{z_i}}{\| \tilde{A} \tilde{z_i} \|_2} - \frac{\tilde{A} \tilde{y_i}}{\| \tilde{A} \tilde{y_i} \|_2} \right\rangle + \alpha\right)
-\end{aligned}
+    \lim_{\mu \to 0^+}  \textrm{LSE}(x; \mu) = \max_j x_j
 \end{equation}
 
-I am not sure if this can be reformulated as a convex problem.
+Using this approximation, we can rewrite the first term of our DC reformulation as
 
-In this work we study:
-\begin{itemize}
-    \item Two metric learning objectives
-    \item Relaxation and reformulation of these objectives as DC functions
-    \item Smoothability of these objectives, and study of accuracy/smoothness tradeoff
-    \item Dependence on data of conditioning of the problem
-    \item Study of smoothness parameters vs. minima for original and smooth relaxation
-    \item Interpretations of these objectives as learning a separating hyperplane with soft margin
-    \item Extension of the objectives to learning an affine mapping instead of weight vector
-    \item Different gradient methods for minimization of these objectives
-    \item Possible extensions to the empirical risk minimization setting
-\end{itemize}
+\begin{equation}
+    g(w; X') = \mu \log(\exp(\frac{1}{\mu}((w^{\top} u)^2) + \alpha), \; \exp(\frac{1}{\mu}(w^{\top} v)^2))
+\end{equation}
 
+\section{Methods}
 
-Other stuff:
-\begin{itemize}
-    \item Different learning rate selection including exact line search, backtracking line search
-    \item Nesterov momentum for speedup (for badly conditioned problems?)
-\end{itemize}
+For our initial analysis, we observe the case where $\mu = 1$ and $\alpha = 0$.
 
-\section{Initial writeup for simplified problem}
+\begin{equation}
+    g(w; X') = \log(\exp((w^{\top} u)^2), \; \exp((w^{\top} v)^2))
+\end{equation}
 
 \subsection{Notation}
 
-\subsection{DC Reformulation}
+In this section, we will use the notation
+
+\subsection{Smoothness of composite functions}
+
+We begin with an analysis of the smoothness of the quadratic function $(w^{\top} x)^2)$ and the LogSumExp function, to help understand later results.
 
 \subsection{Analysis of Full Function Minima}
 
