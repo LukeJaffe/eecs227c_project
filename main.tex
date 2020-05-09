@@ -228,21 +228,15 @@ Extending this to $f(w; B)$, we have
 
 We note that $B \succeq 0$ will occur if and only if $u, v$ are linearly dependent.
 
-In Figures 1 and 2, we show the triplet margin loss as posed in (\ref{eq:full_smooth_margin_f}), with $\alpha=0$ and $\alpha=0.1$ respectively. We note that the randomly generated sample gives $f^*=0$ for both cases.
-
-\begin{figure}
-  \centering
-  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \includegraphics[width=\textwidth]{figures/triplet_viz_alpha0.png}
-  \label{fig:triplet_alpha0}
-  \caption{This figure shows the triplet margin loss with $\alpha = 0$ for a randomly generated triplet sample. The leftmost figure shows the original objective with no smoothing. The center figure shows the smooth objective with $\mu=0.1$. The rightmost figure shows the smooth objective with $\mu=1$. }
-\end{figure}
+In Figure \ref{fig:triplet_viz}, we show the triplet margin loss as posed in (\ref{eq:full_smooth_margin_f}), with $\alpha=0$ and $\alpha=0.1$. We see that
+We note that the randomly generated sample gives $f^*=0$ for both cases.
 
 \begin{figure}
   \centering
   %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
   \includegraphics[width=\textwidth]{figures/triplet_viz.png}
-  \caption{This figure is identical to Figure 1, but with $\alpha = 0.1$.}
+  
+  \caption{\label{fig:triplet_viz}This figure shows the triplet margin loss surface for a randomly generated 2-d triplet sample, with $\alpha = 0$ in the first row and $\alpha = 0.1$ in the second row. The leftmost plots show the original objective with no smoothing. The center plots show the smooth objective with $\mu=0.1$. The rightmost plots show the smooth objective with $\mu=1$. }
 \end{figure}
 
 \subsection{Smoothness Analysis of $g(w)$}
