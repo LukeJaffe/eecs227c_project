@@ -175,10 +175,12 @@ For clarity, we write out the full function in this form as well
 For our initial analysis, we observe the case where $\mu = 1$ and $\alpha = 0$.
 
 \begin{equation}
+\label{eq:final_smooth_f}
     f(w; X') = \log(\exp((w^{\top} u)^2), \; \exp((w^{\top} v)^2)) - (w^{\top} v)^2 
 \end{equation}
 
 \begin{equation}
+\label{eq:final_smooth_g}
     g(w; X') = \log(\exp((w^{\top} u)^2), \; \exp((w^{\top} v)^2))
 \end{equation}
 
@@ -188,21 +190,24 @@ In this section, we clarify notation which will be utilized in following section
 
 We use the notation $f, f(w), f(w; X'), f(w; u, v)$ interchangeably, with $u = u_i = x_i^a - x_i^p$ and $v = v_i = x_i^a - x_i^n$. The same goes for functions $g$ and $h$.
 
+We use the substitution $B = uu^{\top} - vv^{\top}$ to simplify algebra.
+
 The notation $xx^{\top}$ is used frequently, referring to the dyadic matrix which is an outer product of some vector $x \in \mathbb{R}^m$ with itself. This matrix is rank one and positive semi-definite, with its only nonzero eigenvalue $\lambda_{\max}(xx^{\top}) = x^{\top}x = \|x\|_2^2$.
 
 When we say a function is $M$-smooth, we mean that it has $M$-Lipschitz gradients.
 
 \subsection{Smoothness of composite functions}
+\label{sec:composite_smoothness}
 
-To help interpret later results, we analyze the smoothness of the quadratic function $(w^{\top} x)^2)$ and the LogSumExp function.
+To help interpret later results, we analyze the smoothness of the quadratic function $w^{\top}Bw$ and the LogSumExp function.
 
 We have that
 
 \begin{equation}
-    \nabla_w^2 ((w^{\top} x)^2) = xx^{\top}
+    \nabla_w^2 w^{\top}Bw = B
 \end{equation}
 
-Meaning that $(w^{\top} x)^2$ is $M$-smooth, with $M = \lambda_{\max}(xx^{\top}) = \|x\|_2^2$.
+Meaning that $w^{\top}Bw$ is $M$-smooth, with $M = \lambda_{\max}(B)$.
 
 Next, we analyze the LogSumExp function. Using the substitution $\tilde{w} = [\frac{1}{\mu}\exp(w_1), ..., \frac{1}{\mu}\exp(w_m)]$, we can write the softmax function as
 
@@ -262,11 +267,7 @@ In Figure \ref{fig:triplet_viz}, we show the triplet margin loss surface for a r
 
 \subsection{Smoothness analysis of $g(w)$}
 
-We analyze this formulation using the methodology from \cite{khamaru_convergence_2018}. To use the theorem proven in that work, we need $g$ to be continuously differentiable and $M_g$-smooth, and we need $h$ to be continuous and convex. These properties are satisfied for affine choice of $f$ in Problem (\ref{eq:smooth_dc}).
-
-\begin{equation}
-    g(w) = \log( \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) )
-\end{equation}
+We start by analyzing the formulation $f(w) = g(w) - h(w)$ using the methodology from \cite{khamaru_convergence_2018}. To use the theorem proven in that work, we need $g$ to be continuously differentiable and $M_g$-smooth, and we need $h$ to be continuous and convex. These properties are satisfied for the smooth reformulation from (\ref{eq:final_smooth_f}) and (\ref{eq:final_smooth_g}). Here, we will derive the value of $M_g$.
 
 \begin{equation}
     \nabla g(w) 
@@ -520,6 +521,8 @@ Although we can't show $\hat{\eta}$ minimizes $b_{\eta}$, we can show it is a go
 
 In this form, we can see that all the eigenvalues in the inner term must be $\leq 0$. Although this choice of $\eta$ guarantees descent, there is not an easy way to isolate terms so we can use the condition for convergence analysis. The strongest claim we can make is that $b_{\hat{\eta}} \leq 0$.
 
+Comparing to the smoothness of $w^{\top}Bw = \lambda_{\max}(B) = M$ from Section \ref{sec:composite_smoothness}, $\frac{1}{M}$ is very close to the stepsize $\hat{\eta}$, suggesting that the function behavior is dominated by the underlying quadratic.
+
 In Appendix \ref{app:grad_descent}, we compare this this choice of stepsize to ones derived from smoothness in the previous sections, for a simple gradient descent experiment.
 
 % Solve two cases: one where B is PSD, the other where it isn't
@@ -599,11 +602,13 @@ Finally, we have
 
 The term inside the log is always positive, and $q \exp(.) + (1-q) = 1$ if and only if $\exp(.) = 0$, which can occur only if $\| \nabla f(w^t) \|_2^2 = 0$, since $0 < q < 1$. Therefore, we can conclude that $\| \nabla f(w^t) \|_2^2 \rightarrow 0$. Unfortunately, it is difficult to compare this bound against the standard smoothness bound, since the norm gradient term can't be trivially freed from the logs and exponentials.
 
-Another approach to this analysis could be to use the smoothness term directly for the standard smoothness descent condition, and to attempt to free the iterate term from the smoothness
+Another approach to this analysis could be to use the smoothness term directly for the standard smoothness descent condition
 
 \begin{equation}
     f(w^{t+1}) \leq f(w^t) - \frac{1}{2M_f}\| \nabla f(w^t) \|_2^2
 \end{equation}
+
+We could attempt to free the iterate term from the smoothness. An easy way to do that would be to restrict $\|w\|_2^2 \leq 1$.
 
 \subsection{Convergence of the function value}
 
