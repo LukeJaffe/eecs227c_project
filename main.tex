@@ -71,7 +71,7 @@ We show that the triplet margin loss function can be reformulated as a differenc
 
 \subsection{Problem setup}
 
-The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature, esp. for facial recognition \cite{schroff_facenet_2015}. This is the primary objective function used in the popular OpenFace library (\cite{amos_openface_2016}). Further, this objective has longevity in the literature, having been defended in \cite{hermans_defense_2017}, and recently generalized in \cite{qian_softtriple_2019}.
+The \textit{triplet margin loss} function is a common metric learning objective function, which has been demonstrated as empirically effective in the deep learning literature, esp. for facial recognition \cite{schroff_facenet_2015}. This is the primary objective function used in the popular OpenFace library (\cite{amos_openface_2016}). Further, this objective has longevity in the literature, having been used in \cite{araujo_large_2009}, defended in \cite{hermans_defense_2017}, and recently generalized in \cite{qian_softtriple_2019}.
 
 A triplet is defined as a set of three samples, two of which share the same label, and one of which has a different label. Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, we define $X' \in \mathbb{R}^{n' \times m}$ as the set of all possible triplets from $X, Y$. For a given triplet $x_i$, we denote the two samples sharing a label as $x_i^a, x_i^p$ (anchor and positive), and the third sample $x_i^n$ (negative). In addition, we define a margin parameter $\alpha \in \mathbb{R}^+$. Then the triplet margin loss can be stated as follows:
 
@@ -262,6 +262,8 @@ In Figure \ref{fig:triplet_viz}, we show the triplet margin loss surface for a r
 
 \subsection{Smoothness analysis of $g(w)$}
 
+We analyze this formulation using the methodology from \cite{khamaru_convergence_2018}. To use the theorem proven in that work, we need $g$ to be continuously differentiable and $M_g$-smooth, and we need $h$ to be continuous and convex. These properties are satisfied for affine choice of $f$ in Problem (\ref{eq:smooth_dc}).
+
 \begin{equation}
     g(w) = \log( \exp((w^{\top}u)^2) + \exp((w^{\top}v)^2) )
 \end{equation}
@@ -410,7 +412,7 @@ This gives us:
 
 Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B)$. We note that this smoothness bound is usually better than the one achieved in the previous section when analyzing only $g(w)$.
 
-We also note that since we have shown the function is twice continuously differentiable and $M_f$-smooth, the set of initial points for which gradient descent converges to a strict saddle point has measure zero, as proven in \cite{lee_gradient_nodate}.
+We also note that since we have shown the function is twice continuously differentiable and $M_f$-smooth, the set of initial points for which gradient descent converges to a strict saddle point has measure zero, as proven in \cite{lee_gradient_2016}.
 
 \subsection{Gradient descent analysis of $f(w)$}
 \label{sec:grad_descent}
@@ -517,6 +519,8 @@ Although we can't show $\hat{\eta}$ minimizes $b_{\eta}$, we can show it is a go
 \end{align*}
 
 In this form, we can see that all the eigenvalues in the inner term must be $\leq 0$. Although this choice of $\eta$ guarantees descent, there is not an easy way to isolate terms so we can use the condition for convergence analysis. The strongest claim we can make is that $b_{\hat{\eta}} \leq 0$.
+
+In Appendix \ref{app:grad_descent}, we compare this this choice of stepsize to ones derived from smoothness in the previous sections, for a simple gradient descent experiment.
 
 % Solve two cases: one where B is PSD, the other where it isn't
 % Recall that $B \nsucceq 0$, which means that problem (\ref{eq:eta_opt}) is not convex. We will show that a good choice of $\eta$ is $\eta = \frac{1}{\|B\|_2}$.
@@ -678,6 +682,7 @@ We would also like to compare the triplet loss to the soft margin loss and logis
 
 \begin{appendices}
 \section{Gradient Descent Experiment}
+\label{app:grad_descent}
 
 \begin{figure}[!h]
   \centering
