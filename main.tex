@@ -61,6 +61,8 @@
 % ========== Begin answering questions here 
 The goal of this project is to study gradient descent on the triplet margin loss function, a non-convex objective function used in the metric learning domain. The GitHub repository for the project is linked here\footnote{\url{https://github.com/LukeJaffe/eecs227c_project}}.
 
+We show that the triplet margin loss function can be reformulated as a difference of convex functions, and that a reasonable smooth approximation can be formulated with the LogSumExp function. We show that this function is smooth, and give an upper bound for the smoothness which is dependent on the iterate. Then, we show that a descent condition holds for the gradient descent algorithm, given the right choice of stepsize. Finally, we attempt a gradient descent convergence analysis for the iterate, the squared gradient norm, and the function value, and discuss insight from these efforts.
+
 \subsection{Background}
  
  Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $\phi: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification, as in \cite{weinberger_distance_2009}. More recently, metric learning has been combined with deep learning into a highly accurate vehicle for solving a range problems in computer vision and natural language processing. 
@@ -167,8 +169,6 @@ For clarity, we write out the full function in this form as well
 \label{eq:full_smooth_margin_f}
     f(w; X') = \mu \log(\exp(\frac{1}{\mu}((w^{\top} u)^2) + \alpha), \; \exp(\frac{1}{\mu}(w^{\top} v)^2)) - (w^{\top} v)^2
 \end{equation}
-
-\subsection{Outline}
 
 \section{Results}
 
@@ -347,13 +347,7 @@ Meaning that $g(w)$ is $M_g$-smooth, with $M_g = \|w\|_2^2 \left\{ \|u\|_2^4 + \
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Smoothness analysis of $f(w)$}
 
-In this section, we analyze a simplified version of the target function, with $\mu = 1$ and $\alpha = 0$. We simplify notation by letting $u = x - y$ and $v = x - z$.
-
-\begin{equation}
-    f(w) = \log(\exp((w^{\top}u)^2 - (w^{\top}v)^2) + 1)
-\end{equation}
-
-We can simplify further by letting $B = uu^\top - vv^\top$:
+In this section, we analyze the full function, instead of just $g(w)$, to see how the smoothness bound compares. Recall that $B = uu^\top - vv^\top$. We can rewrite the function in the softplus form by pushing all terms from the max into an exponential
 
 \begin{equation}
 \label{eq:f}
@@ -414,7 +408,9 @@ This gives us:
     \nabla^2 f(w) \prec ( \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B)) I_m
 \end{equation}
 
-Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B)$.
+Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B)$. We note that this smoothness bound is usually better than the one achieved in the previous section when analyzing only $g(w)$.
+
+We also note that since we have shown the function is twice continuously differentiable and $M_f$-smooth, the set of initial points for which gradient descent converges to a strict saddle point has measure zero, as proven in \cite{lee_gradient_nodate}.
 
 \subsection{Gradient descent analysis of $f(w)$}
 \label{sec:grad_descent}
@@ -565,7 +561,7 @@ Choosing a stepsize of $\eta = \frac{1}{M_f}$, we have the standard bound
     \sqrt{\frac{1}{T} \sum_{t=1}^{T} \| \nabla f(w^t) \|_2^2} \leq \sqrt{\frac{2 M_f (f(w^1) - f(w^*))}{T}}
 \end{equation}
 
-We would like to attempt improvement of this bound using the specific structure of our function.
+However, since both of our derived smoothness terms depend on the iterate, we cannot assume this bound. So we will instead utilize our descent condition from Section \label{sec:grad_descent}.
 
 We have
 
@@ -598,6 +594,12 @@ Finally, we have
 \end{align*}
 
 The term inside the log is always positive, and $q \exp(.) + (1-q) = 1$ if and only if $\exp(.) = 0$, which can occur only if $\| \nabla f(w^t) \|_2^2 = 0$, since $0 < q < 1$. Therefore, we can conclude that $\| \nabla f(w^t) \|_2^2 \rightarrow 0$. Unfortunately, it is difficult to compare this bound against the standard smoothness bound, since the norm gradient term can't be trivially freed from the logs and exponentials.
+
+Another approach to this analysis could be to use the smoothness term directly for the standard smoothness descent condition, and to attempt to free the iterate term from the smoothness
+
+\begin{equation}
+    f(w^{t+1}) \leq f(w^t) - \frac{1}{2M_f}\| \nabla f(w^t) \|_2^2
+\end{equation}
 
 \subsection{Convergence of the function value}
 
@@ -646,21 +648,17 @@ Simplifying further appears to be nontrivial, and we can't make a claim about th
 
 \subsection{Discussion}
 
-In this work, we show that the triplet margin loss function can be reformulated as a difference of convex functions, and that a reasonable smooth approximation can be formulated with the LogSumExp function. We show that this function is smooth, and give an upper bound for the smoothness which is dependent on the iterate. Then, we attempt a convergence analysis for the iterate, the squared gradient norm, and for the function value. While none of the convergence bounds achieved are very useful, they provide insight into the structure of the function, and lay a nice foundation for future work.
+In this work, we show that the triplet margin loss function can be reformulated as a difference of convex functions, and that a reasonable smooth approximation can be formulated with the LogSumExp function. We show that this function is smooth, and give an upper bound for the smoothness which is dependent on the iterate. Then, we show that a descent condition not directly related to the smoothness holds for the gradient descent algorithm, given the right choice of stepsize. Finally, we attempt a gradient descent convergence analysis for the iterate, the squared gradient norm, and the function value. While none of the convergence bounds achieved are very useful, they provide insight into the structure of the function, and lay a nice foundation for future work.
 
-One takeaway from this effort is that the condition of convexity cannot be trivially replaced just by knowing the function structure. 
-
-It would be interesting to see if different algorithms, including a proximal type alforithm, Frank-Wolfe, or the stochastic gradient method could be easier to anlalyze.
-
-We would also like to test if the functions satisfies the Kurdaya-Łojasiewicz, as detailed in \cite{khamaru_convergence_2018}, to achieve a faster convergence rate.
+One conclusion from this effort is that the condition of convexity cannot be trivially replaced just by knowing the function structure. Still, by showing that the triplet function is smooth, and that it satisfies a descent condition separate from its smoothness, we have shown that the function is more relaxed than the conditions imposed from \cite{khamaru_convergence_2018}. Further analysis should yield a faster rate than the bound on the norm squared gradient achieved from smoothness.
 
 \subsection{Future Work}
 
-There are several extensions that we would like to perform on this analysis. First, we would like to repeat the analysis for $\alpha > 0$ and $\mu \neq 1$. Second we would like to analyze the multi-sample case ($n > 1$). Third we would like to study the case where $d > 1$. Fourth, we would like to add a learnable bias term to the analysis. Finally, we would like to study the stochastic case, so that this work can be applied in practice for empirical risk minimization, given randomly sampled data.
+There are several extensions that we would like to perform on this analysis. First, we would like to repeat the analysis for $\alpha > 0$ and $\mu \neq 1$. Second we would like to analyze the multi-sample case ($n > 1$). Third we would like to study the case where $d > 1$. Fourth, we would like to add a learnable bias term to the analysis. Finally, we would like to study the stochastic case, so that this work can be applied in practice for empirical risk minimization, given randomly sampled data. These insights can be imported back to the deep learning setting to have a more principled understanding of optimization in that context.
 
-One potential application of this analysis could be to ``warm-start'' the last layer of a neural network.
+In addition, we would like to conduct a similar analysis for the contrastive loss function posed in \cite{hadsell_dimensionality_2006}, which optimizes over pairs of samples instead of triplets. This loss function can be reformulated as a triplet loss by considering two pairs, and is also a DC function that can be smoothed with LogSumExp. We would like to compare convergence bounds, and then conduct an empirical analysis, to determine which objective generalizes better to new data.
 
-We would also like to compare the function to the soft margin loss and logistic loss for the support vector machine (SVM). It would be interesting to compare the learned weights $w$, and see how the models compare in terms of generalization.
+We would also like to compare the triplet loss to the soft margin loss and logistic loss for the support vector machine (SVM). It would be interesting to study the learned hyperplane boundary from $w$, and see how the models compare in terms of generalization.
 
 % \subsection{Previously wanted next steps}
 
@@ -678,9 +676,16 @@ We would also like to compare the function to the soft margin loss and logistic 
 
 %\appendix
 
-
 \begin{appendices}
-\section{Gradient Descent Experiments}
+\section{Gradient Descent Experiment}
+
+\begin{figure}[!h]
+  \centering
+  %\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+  \includegraphics[width=\textwidth]{figures/triplet_descent.png}
+  
+  \caption{\label{fig:triplet_descent}This figure gradient descent on the triplet margin loss for a randomly generated 2-d triplet sample, with $\alpha=0, \mu=1$. The three plots correspond to the function value, norm of the iterate, and norm squared of the gradient respectively. Each plot has three stepsizes, chosen based on the bounds for $M_g$, $M_f$, and $\hat{\eta}$. Notice that the function value descends monotonically for all choices of $\eta$, but descends much faster for $\eta = \hat{\eta}$ (appears to be quadratic in log space). Also, notice that the norm squared of the gradient increases before decreasing, which can be explained by the saddle structure of the loss surface.}
+\end{figure}
 
 %\section{Some More Notation}
 \end{appendices}
