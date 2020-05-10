@@ -7,6 +7,7 @@
 %\usepackage[sorting=none]{biblatex}
 %\addbibresource{references.bib}
 \usepackage{graphicx}
+\usepackage[title]{appendix}
 
 %\usepackage[square,numbers]{natbib}
 \bibliographystyle{abbrvnat}
@@ -25,10 +26,10 @@
 
 
 % ========== Edit your name here
-\author{Lucas Jaffe}
+\author{Lucas Jaffe \\ PhD Student in Berkeley EECS Department \\ Email: lucasjaffe@berkeley.edu \\ Document date: May 9$^{\textrm{th}}$, 2020}
 
 \title{
-    Analysis of Gradient Descent on the Triplet Margin Loss \\
+    Analysis of Gradient Descent \\ on the Triplet Margin Loss \\
     \large EECS227C Project
     }
 \maketitle
@@ -62,9 +63,9 @@ The goal of this project is to study gradient descent on the triplet margin loss
 
 \subsection{Background}
  
- Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $\phi: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification, as in \cite{weinberger_distance_2009}. 
-
-More recently, metric learning has been combined with deep learning into a highly accurate vehicle for solving three computer vision problems: verification, re-identification, and retrieval. In the image verification problem, the goal is to tell whether two images belong to the same instance. This is commonly used for authentication of identity, either for unlocking a smartphone\footnote{\url{https://support.apple.com/en-us/HT208108}}, or more recently for airport security (\cite{mccartney_are_2019}). In the image re-identification problem, the goal is to search a database for a single matching image to a query image. This is commonly used for re-identification of people (\cite{zheng_scalable_2015}) / faces (\cite{schroff_facenet_2015}), and vehicles (\cite{liu_deep_2016}). In the image retrieval problem, the goal is to return all similar or matching images to a query image. This is used in reverse image search applications, e.g., from Google\footnote{\url{https://support.google.com/websearch/answer/1325808?co=GENIE.Platform\%3DDesktop&hl=en}} and new law enforcement applications including the platform developed by ClearView AI\footnote{\url{https://clearview.ai/}}.
+ Given some data $X \in \mathbb{R}^{n \times m}$ and corresponding labels $Y \in \mathbb{R}^n$, in the supervised metric learning problem, the goal is to find a mapping $\phi: \mathbb{R}^{n \times m} \rightarrow \mathbb{R}^{n \times d}$, such that samples with the same label are close together in some metric space, and samples with different labels are further apart. Classically, this type of problem formulation was studied as a dimensionality reduction method, as in \cite{hadsell_dimensionality_2006}, or for k-nearest neighbors classification, as in \cite{weinberger_distance_2009}. More recently, metric learning has been combined with deep learning into a highly accurate vehicle for solving a range problems in computer vision and natural language processing. 
+ 
+ %verification, re-identification, and retrieval. In the image verification problem, the goal is to tell whether two images belong to the same instance. This is commonly used for authentication of identity, either for unlocking a smartphone\footnote{\url{https://support.apple.com/en-us/HT208108}}, or more recently for airport security (\cite{mccartney_are_2019}). In the image re-identification problem, the goal is to search a database for a single matching image to a query image. This is commonly used for re-identification of people (\cite{zheng_scalable_2015}) / faces (\cite{schroff_facenet_2015}), and vehicles (\cite{liu_deep_2016}). In the image retrieval problem, the goal is to return all similar or matching images to a query image. This is used in reverse image search applications, e.g., from Google\footnote{\url{https://support.google.com/websearch/answer/1325808?co=GENIE.Platform\%3DDesktop&hl=en}} and new law enforcement applications including the platform developed by ClearView AI\footnote{\url{https://clearview.ai/}}.
 
 \subsection{Problem setup}
 
@@ -403,19 +404,20 @@ Noting that $0 < q < 1$ and $0 < q^2 \leq \frac{1}{4}$ we have, $\forall z \in \
 z^{\top} \nabla^2 f(w) z 
 &= 4q(1-q) z^{\top} Bww^{\top}B z + 2q z^{\top} B z \\
 &< z^{\top} Bww^{\top}B z + 2 z^{\top} B z \\
-&\leq \|z\|_2^2 \|w\|_2^2 \|B\|_2^2 + 2 \|z\|_2^2 \|B\|_2 \\
-&= \|z\|_2^2 ( \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2 ) 
+&\leq \|z\|_2^2 \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \|z\|_2^2 \lambda_{\max} (B) \\
+&= \|z\|_2^2 ( \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B) ) 
 \end{align*}
 
 This gives us:
 
 \begin{equation}
-    \nabla^2 f(w) \prec ( \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2 ) I_m
+    \nabla^2 f(w) \prec ( \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B)) I_m
 \end{equation}
 
-Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \|B\|_2^2 + 2 \|B\|_2$.
+Meaning that $f(w)$ is $M_f$-smooth, with $M_f = \|w\|_2^2 \lambda_{\max} (B)^2 + 2 \lambda_{\max} (B)$.
 
 \subsection{Gradient descent analysis of $f(w)$}
+\label{sec:grad_descent}
 
 We analyze the standard gradient step
 
@@ -499,38 +501,128 @@ In terms of $\eta$, we want to find
 \end{split}
 \end{equation}
 
-% Solve two cases: one where B is PSD, the other where it isn't
-Recall that $B \nsucceq 0$, which means that problem (\ref{eq:eta_opt}) is not convex. We will show that a good choice of $\eta$ is $\eta = \frac{1}{\|B\|_2}$.
+Although the function is not convex in $\eta$, we can search for a first order critical point.
 
 \begin{align*}
-    b_\eta &= w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w \\
-    &= \frac{4 q^2 w^{\top} B^3 w}{\|B\|_2^2} - \frac{4 q w^{\top} B^2 w}{\|B\|_2} \\
-    &\leq \frac{4 q^2 \|B\|_2^3}{\|B\|_2^2} - \frac{4 q \|B\|_2^2 }{\|B\|_2} \\
-    &= 4 q (q-1) \|B\|_2 \\
-    &\implies -\|B\|_2 \leq 4 q (q-1) \|B\|_2 \leq 0
+\nabla_{\eta} w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w 
+&= 8 \eta q^2 w^{\top} B^3 w - 4 q w^{\top} B^2 w = 0 \\
+&\implies 2 \eta q w^{\top} B^3 w = w^{\top} B^2 w \\
+&\implies \eta = \frac{w^{\top} B^2 w}{2 q w^{\top} B^3 w} \\ 
+&\implies \eta \leq \frac{1}{2q\lambda_{\max}(B)} \\
+&\implies \hat{\eta} = \frac{1}{2q\lambda_{\max}(B)}
 \end{align*}
 
-The last step using $-\frac{1}{4} \leq q (q-1) \leq 0$. Since the given choice of $\eta$ is the largest valid choice which guarantees $b_\eta \leq 0$, it is optimal.
+Although we can't show $\hat{\eta}$ minimizes $b_{\eta}$, we can show it is a good choice by examining the eigenvalues of $b_{\hat{\eta}}$. Let $B = U^{\top} \Lambda U$ be the spectral decomposition of $B$. Then we have
 
-\subsection{Bound on the iterate}
+\begin{align*}
+    b_{\hat{\eta}} &= w^{\top} ( 4 \hat{\eta}^2 q^2 B^3 - 4 \hat{\eta} q B^2)w \\
+    &= w^{\top} \left( \frac{B^3}{\lambda_{\max}(B)^2} - \frac{2 B^2}{\lambda_{\max}(B)} \right) w \\
+    &= w^{\top} U^{\top} \left( \frac{\Lambda^3}{\lambda_{\max}(B)^2} - \frac{2 \Lambda^2}{\lambda_{\max}(B)} \right) Uw
+\end{align*}
 
-This section will be added shortly.
+In this form, we can see that all the eigenvalues in the inner term must be $\leq 0$. Although this choice of $\eta$ guarantees descent, there is not an easy way to isolate terms so we can use the condition for convergence analysis. The strongest claim we can make is that $b_{\hat{\eta}} \leq 0$.
+
+% Solve two cases: one where B is PSD, the other where it isn't
+% Recall that $B \nsucceq 0$, which means that problem (\ref{eq:eta_opt}) is not convex. We will show that a good choice of $\eta$ is $\eta = \frac{1}{\|B\|_2}$.
+
+% \begin{align*}
+%     b_\eta &= w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w \\
+%     &= \frac{4 q^2 w^{\top} B^3 w}{\|B\|_2^2} - \frac{4 q w^{\top} B^2 w}{\|B\|_2} \\
+%     &\leq \frac{4 q^2 \|B\|_2^3}{\|B\|_2^2} - \frac{4 q \|B\|_2^2 }{\|B\|_2} \\
+%     &= 4 q (q-1) \|B\|_2 \\
+%     &\implies -\|B\|_2 \leq 4 q (q-1) \|B\|_2 \leq 0
+% \end{align*}
+
+% The last step using $-\frac{1}{4} \leq q (q-1) \leq 0$. Since the given choice of $\eta$ is the largest valid choice which guarantees $b_\eta \leq 0$, it is optimal.
+
+\subsection{Coarse bound on the iterate}
+
+Using the stepsize $\eta = \hat{\eta}$
+
+\begin{align*}
+    w^{t+1} = w^t - \hat{\eta} \nabla f(w^t)
+    &= (I_m - 2q \hat{\eta} B)w^t \\
+    &= \left( I_m - \frac{B}{\lambda_{\max}(B)} \right) w^t \\
+    &= \left( I_m - \frac{B}{\lambda_{\max}(B)} \right)^t w^1
+\end{align*}
+
+Taking the norm of both sides, we have
+
+\begin{align*}
+    \|w^{t+1}\|_2 &= \left\|\left( I_m - \frac{B}{\lambda_{\max}(B)} \right)^t w^1 \right\|_2 \\
+    &\leq \left\|\left( I_m - \frac{B}{\lambda_{\max}(B)} \right)^t \right\|_F \|w^1\|_2
+\end{align*}
+
+Since there is no guarantee on what the norm of some $w^*$ should be, this bound is not very useful in practice.
 
 \subsection{Convergence of the squared gradient norm}
 
-In \cite{khamaru_convergence_2018}, the following bound is given on the average squared gradient norm, with $\eta \in (0, \frac{1}{M_g}]$
+%In \cite{khamaru_convergence_2018}, the following bound is given on the average squared gradient norm, with $\eta \in (0, \frac{1}{M_g}]$
+
+Choosing a stepsize of $\eta = \frac{1}{M_f}$, we have the standard bound
 
 \begin{equation}
-    \textrm{Avg}(\|\nabla f(x^k) \|_2^2) \leq \frac{2(f(x^0) - f^*)}{\eta(k + 1)}
+    \sqrt{\frac{1}{T} \sum_{t=1}^{T} \| \nabla f(w^t) \|_2^2} \leq \sqrt{\frac{2 M_f (f(w^1) - f(w^*))}{T}}
 \end{equation}
 
-We would like to attempt improvement of this bound using the specific properties of our function. This section will be added shortly.
+We would like to attempt improvement of this bound using the specific structure of our function.
+
+We have
+
+\begin{equation}
+    \| \nabla f(w) \|_2^2 = 4 q^2 w^{\top} B^2 w
+\end{equation}
+
+From Section \ref{sec:grad_descent}, choosing $\eta = \frac{1}{\lambda_{\max}(B)}$, we have
+
+\begin{align*}
+    b_\eta &= w^{\top} ( 4 \eta^2 q^2 B^3 - 4 \eta q B^2)w \\
+    &= \frac{\nabla f(w)^{\top} B \nabla f(w)^{\top}}{\lambda_{\max}(B)^2} - \frac{\| \nabla f(w) \|_2^2}{q \lambda_{\max}(B)} \\
+    &\leq \frac{ \lambda_{\max}(B) \| \nabla f(w) \|_2^2}{\lambda_{\max}(B)^2} - \frac{\| \nabla f(w) \|_2^2}{q \lambda_{\max}(B)}\\
+    &= \frac{(q-1) \| \nabla f(w) \|_2^2}{q \lambda_{\max}(B)}
+\end{align*}
+
+This gives us
+
+\begin{align*}
+    f(w^{t+1}) - f(w^t) &\leq \log( q \exp(b_\eta ) + (1 - q)) \\
+    &= \log \left( q \exp \left( \frac{(q-1) \| \nabla f(w^t) \|_2^2}{q \lambda_{\max}(B)} \right) + (1 - q) \right) \\
+    &\implies \log \left( q \exp \left( \frac{(1-q) \| \nabla f(w^t) \|_2^2}{q \lambda_{\max}(B)} \right) + (1-q) \right) \leq f(w^t) - f(w^{t+1}) 
+\end{align*}
+
+Finally, we have
+
+\begin{align*}
+    \sum_{t=1}^{T} \log \left( q \exp \left( \frac{(1-q) \| \nabla f(w^t) \|_2^2}{q \lambda_{\max}(B)} \right) + (1-q) \right) &\leq f(w^1) - f(w^{T}) \\
+    &\leq f(w^1) - f(w^{*})
+\end{align*}
+
+The term inside the log is always positive, and $q \exp(.) + (1-q) = 1$ if and only if $\exp(.) = 0$, which can occur only if $\| \nabla f(w^t) \|_2^2 = 0$, since $0 < q < 1$. Therefore, we can conclude that $\| \nabla f(w^t) \|_2^2 \rightarrow 0$. Unfortunately, it is difficult to compare this bound against the standard smoothness bound, since the norm gradient term can't be trivially freed from the logs and exponentials.
 
 \subsection{Convergence of the function value}
 
-Since we have $f(w^{t+1}) < f(w^t) + c$, we can attempt to show convergence of the function value. This section will be added shortly.
+Using the gradient update, we have
 
-%\subsection{Experiments}
+\begin{align*}
+    w^{t+1\top}Bw^{t+1} &\leq w^{t\top}Bw^{t} + b_\eta \\
+    &\leq w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k \\
+    &\implies \log( \exp(w^{t+1\top}Bw^{t+1}) + 1) \leq \log( \exp(w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k) + 1) \\
+    &\implies f(w^{t+1}) \leq \log( \exp(w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k) + 1)
+\end{align*}
+
+Now we can say
+
+\begin{align*}
+    f(w^{t+1}) - f^* &\leq \log( \exp(w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k) + 1) - f^* \\
+    &= \log( \exp(w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k) + 1) - \log( \exp(w^{*\top}Bw^{*}) + 1) \\
+    &= \log \left( \frac{\exp(w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k) + 1}{\exp(w^{*\top}Bw^{*}) + 1} \right) \\
+    &\leq \log \left( \frac{\exp(w^{1\top}Bw^{1} + \sum_{k=1}^{t+1} b_\eta^k)}{\exp(w^{*\top}Bw^{*})} + 1 \right) \\
+    &= \log \left( \exp \left(w^{1\top}Bw^{1} - w^{*\top}Bw^{*} + \sum_{k=1}^{t+1} b_\eta^k \right) + 1 \right)
+\end{align*}
+
+Simplifying further appears to be nontrivial, and we can't make a claim about the iteration complexity without somehow freeing the iteration count from the summation term.
+
+\subsection{Experiments}
 
 %\subsection{Extension to case with $\mu \neq 1$ and $\alpha > 0$}
 
@@ -554,7 +646,7 @@ Since we have $f(w^{t+1}) < f(w^t) + c$, we can attempt to show convergence of t
 
 \subsection{Discussion}
 
-In this work, we show that the triplet margin loss function can be reformulated as a difference of convex functions, and that a reasonable smooth approximation can be formulated with the LogSumExp function. We show that this function is smooth, and give an upper bound for the smoothness which is dependent on the iterate. Then, we attempt a convergence analysis for the iterate, the squared gradient norm, and for the function value. While none of the convergence bounds achieved were very good, they lay a nice foundation for future work.
+In this work, we show that the triplet margin loss function can be reformulated as a difference of convex functions, and that a reasonable smooth approximation can be formulated with the LogSumExp function. We show that this function is smooth, and give an upper bound for the smoothness which is dependent on the iterate. Then, we attempt a convergence analysis for the iterate, the squared gradient norm, and for the function value. While none of the convergence bounds achieved are very useful, they provide insight into the structure of the function, and lay a nice foundation for future work.
 
 One takeaway from this effort is that the condition of convexity cannot be trivially replaced just by knowing the function structure. 
 
@@ -583,6 +675,15 @@ We would also like to compare the function to the soft margin loss and logistic 
 % \end{itemize}
 
 \bibliography{references}
+
+%\appendix
+
+
+\begin{appendices}
+\section{Gradient Descent Experiments}
+
+%\section{Some More Notation}
+\end{appendices}
 
 \end{document}
 \grid
